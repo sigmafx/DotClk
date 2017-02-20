@@ -75,6 +75,7 @@ void setup()
   // RTC Compensation
   // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
   // For example, adjust = -100 is slows the clock by 11.92 ppm
+  
   Teensy3Clock.compensate(0);
     
   // Initialise the LED pin as an output.
