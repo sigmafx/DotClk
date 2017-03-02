@@ -23,21 +23,21 @@ enum MODE {
 };
 
 // Pin Assignments
-const int pinEN = 2 ;
-const int pinR1 = 3 ;
-const int pinR2 = 4 ;
-const int pinLA = 5 ;
+const int pinEN = 19 ;
+const int pinR1 = 20 ;
+const int pinR2 = 21 ;
+const int pinLA = 7 ;
 const int pinLB = 6 ;
-const int pinLC = 7 ;
-const int pinLD = 8 ;
-const int pinLT = 9 ;
-const int pinSK = 10 ;
+const int pinLC = 5 ;
+const int pinLD = 4 ;
+const int pinLT = 1 ;
+const int pinSK = 0 ;
 const int pinLED = 13;
-const int pinBtnPower = 14;
-const int pinBtnPlus = 16;
-const int pinBtnMinus = 15;
-const int pinBtnEnter = 17;
-const int pinBtnMenu = 18;
+const int pinBtnPlus = 28;
+const int pinBtnMinus = 29;
+const int pinBtnEnter = 27;
+const int pinBtnMenu = 30;
+const int pinGND[] = { 16, 17, 18, 22, 23 } ;
 
 // Fonts
 Font fontStandard;
@@ -47,7 +47,6 @@ Font fontUser;
 Font& fontClock = fontStandard;
 
 // Buttons
-Button btnPower(pinBtnPower);
 Button btnMenu(pinBtnMenu);
 Button btnPlus(pinBtnPlus);
 Button btnMinus(pinBtnMinus);
@@ -62,6 +61,13 @@ File dirScenes;
 void setup()
 {  
   Dotmap dmpFont;
+
+  // Set GND
+  for (int nGnd = 0; nGnd < (sizeof(pinGND) / sizeof(int)); nGnd++)
+  {
+    digitalWrite(pinGND[nGnd], LOW);
+    pinMode(pinGND[nGnd], OUTPUT);
+  }
   
   // Serial debug
   Serial.begin(9600);
