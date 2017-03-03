@@ -20,17 +20,19 @@ https://www.pjrc.com/teensy/loader.html
 To compile the source code you'll need to download the Arduino IDE and the Teensy extensions:
 https://www.pjrc.com/teensy/tutorial.html
 
-You can then grab the code from the repoisitory and compile / update the code locally as you need.
+You can then grab the code from the repository and compile / update the code locally as you need.
 
 ## How to Use DotClk
 The code is designed for use with the DotClk interface board. The code is well documented for the pin assignments for the various connections to the screen and the control buttons.
 
 Pressing the Menu button will display the menu. Use Prev and Next buttons and the Edit / Back buttons to setup the clock.
 
+Press and hold the Back button to turn off the display. Press and release the Back button to turn on again.
+
 ## Where are the Animations Held?
-On the SDCard there needs to be a directory called Scenes. Place the animation scene files (.scn) in this directory.
+On the SD Card there needs to be a directory called Scenes. Place the animation scene files (.scn) in this directory.
 
 ## Where are the Fonts Held?
-On the SDCard there needs to be a directory called Fonts. Place the font files (.fnt) in this directory.
+On the SD Card there needs to be a directory called Fonts. Place the font files (.fnt) in this directory.
 
 Get in touch if you need any help - I hang out on PinballInfo.com, user DrPinball.
