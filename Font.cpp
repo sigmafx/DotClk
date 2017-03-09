@@ -164,7 +164,7 @@ byte Font::GetFontName(File& fileFont, char *fontName, size_t sizeFontName)
 
   if(fontName != NULL && sizeFontName > 0)
   {
-    FontNameLen = min((FontNameLen + 1), sizeFontName);
+    FontNameLen = min((int)(FontNameLen + 1), (int)sizeFontName);
     
     fileFont.read(fontName, FontNameLen);
     fontName[FontNameLen - 1] = '\0';
