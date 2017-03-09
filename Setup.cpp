@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include <Time.h>
 
+#include "Setup.h"
 #include "Button.h"
 #include "Font.h"
 #include "DmdFrame.h"
 #include "Dotmap.h"
 #include "Dmd.h"
 #include "Config.h"
+#include "Utils.h"
 
 // Menu Helper
 struct Menu;
@@ -23,11 +25,11 @@ struct Menu
 };
 
 // Function prototypes
-void PaintTitle(DmdFrame& frame, const char *titleText);
-void PaintButtons(DmdFrame& frame, const char *btnText[4]);
-int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue);
-bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue);
-int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue);
+static void PaintTitle(DmdFrame& frame, const char *titleText);
+static void PaintButtons(DmdFrame& frame, const char *btnText[4]);
+static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue);
+static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue);
+static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue);
 
 // External objects - see DmdClock source
 extern Font fontMenu;
@@ -46,12 +48,13 @@ enum
   MENU_TIMEFORMAT = 2,
   MENU_BRIGHTNESS = 3,
   MENU_CLOCKDELAY = 4,
+  MENU_CLOCKFONT = 5,
 };
 
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(5)
+  MenuMainMenu() : Menu(6)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
@@ -59,6 +62,7 @@ struct MenuMainMenu : Menu
     menuItems[2] = "TIME FORMAT";
     menuItems[3] = "BRIGHTNESS";
     menuItems[4] = "CLOCK DELAY";
+    menuItems[5] = "CLOCK FONT";
     menuButtons[0] = "Back";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -119,6 +123,7 @@ MenuMainMenu menuMainMenu;
 MenuDST menuDST;
 MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
+Menu *menuClockFont = NULL;
 
 // Config Items
 time_t DateTime ;
@@ -126,6 +131,7 @@ int cfgDST;
 int cfgTimeFormat;
 int Brightness ;
 int cfgClockDelay;
+int cfgClockFont;
 
 //------------------
 // Function: doSetup
@@ -147,6 +153,24 @@ bool doSetup(bool isInit)
     config.GetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
     config.GetCfgItem(CFG_BRIGHTNESS, &Brightness, sizeof(Brightness));
     config.GetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
+    cfgClockFont = 0;
+
+    // Generate the Clock Font menu
+    if(menuClockFont != NULL)
+    {
+      // Delete the previous menu
+      delete menuClockFont;
+    }
+    // Allocate the new menu
+    menuClockFont = new Menu(2);
+    // Populate it
+    menuClockFont->menuTitle = "CLOCK FONT";
+    menuClockFont->menuItems[0] = "STANDARD";
+    menuClockFont->menuItems[1] = "TREK";
+    menuClockFont->menuButtons[0] = "Back";
+    menuClockFont->menuButtons[1] = "Prev";
+    menuClockFont->menuButtons[2] = "Next";
+    menuClockFont->menuButtons[3] = "Save";
 
     // Init sub menu
     idxSubMenu = MENU_SETTIME;
@@ -176,7 +200,7 @@ bool doSetup(bool isInit)
         switch(idxSubMenu)
         {
           case MENU_SETTIME: // Set Time
-            DateTime = now();
+            DateTime = NowDST();
             HandleSetTime(frame, false, true, DateTime);
             break;
 
@@ -195,6 +219,10 @@ bool doSetup(bool isInit)
 
           case MENU_CLOCKDELAY: // Clock Delay
             HandleStandard(frame, menuClockDelay, true, cfgClockDelay);
+            break ;
+
+          case MENU_CLOCKFONT: // Clock Font
+            HandleStandard(frame, *menuClockFont, true, cfgClockFont);
             break ;
 
           default: // ERROR
@@ -279,6 +307,16 @@ bool doSetup(bool isInit)
         break;
       }
       
+      case MENU_CLOCKFONT: // Clock Font
+      {
+        int menuRet = HandleStandard(frame, *menuClockFont, false, cfgClockFont);
+        if(menuRet != 0)
+        {
+          showMainMenu = true;
+        }
+        break ;
+      }
+
       default:
         showMainMenu = true;
         break;
@@ -295,11 +333,11 @@ bool doSetup(bool isInit)
 //---------------------
 // Function: PaintTitle
 //---------------------
-void PaintTitle(DmdFrame& frame, const char *titleText)
+static void PaintTitle(DmdFrame& frame, const char *titleText)
 {
   Dotmap dmpTitle;
   char clock[5 + 1];
-  time_t time = now();
+  time_t time = NowDST();
   
   // Title Text
   dmpTitle.Create(128, 9);
@@ -316,7 +354,7 @@ void PaintTitle(DmdFrame& frame, const char *titleText)
 //-----------------------
 // Function: PaintButtons
 //-----------------------
-void PaintButtons(DmdFrame& frame, const char *btnText[4])
+static void PaintButtons(DmdFrame& frame, const char *btnText[4])
 {
   Dotmap dmpButtons;
 
@@ -342,7 +380,7 @@ void PaintButtons(DmdFrame& frame, const char *btnText[4])
 //-------------------------
 // Function: HandleStandard
 //-------------------------
-int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue)
+static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue)
 {
   static int value ;
 
@@ -419,7 +457,7 @@ int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue)
 //---------------------------
 // Function: HandleBrightness
 //---------------------------
-bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
+static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
 {
   static int value ;
   bool ret = true;
@@ -495,7 +533,7 @@ bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
 //------------------------
 // Function: HandleSetTime
 //------------------------
-int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue)
+static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue)
 {
   static TimeElements value ;
   static int position ;
