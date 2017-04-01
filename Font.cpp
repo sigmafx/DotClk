@@ -1,4 +1,5 @@
-#include "Arduino.h"
+#include <Arduino.h>
+
 #include "Font.h"
 #include "Dotmap.h"
 
@@ -151,6 +152,25 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
   }
   
   return dmp;
+}
+
+byte Font::GetFontName(File& fileFont, char *fontName, size_t sizeFontName)
+{
+  uint16_t Version;
+  byte FontNameLen ;
+
+  fileFont.read(&Version, sizeof(Version));
+  fileFont.read(&FontNameLen, sizeof(FontNameLen));
+
+  if(fontName != NULL && sizeFontName > 0)
+  {
+    FontNameLen = min((int)(FontNameLen + 1), (int)sizeFontName);
+    
+    fileFont.read(fontName, FontNameLen);
+    fontName[FontNameLen - 1] = '\0';
+  }
+
+  return FontNameLen;
 }
 
 //--------

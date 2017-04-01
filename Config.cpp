@@ -24,6 +24,7 @@ Config::Config()
     cfgTimeFormat = CFG_TF_24HOUR;
     cfgBrightness = 10;
     cfgClockDelay = CFG_CD_5SECS;
+    strcpy(cfgClockFont, "STANDARD");
 
     Write();
   }
@@ -43,6 +44,7 @@ bool Config::Read()
     address += readBytes(address, (byte*)&cfgTimeFormat, sizeof(cfgTimeFormat));
     address += readBytes(address, (byte*)&cfgBrightness, sizeof(cfgBrightness));
     address += readBytes(address, (byte*)&cfgClockDelay, sizeof(cfgClockDelay));
+    address += readBytes(address, (byte*)&cfgClockFont, sizeof(cfgClockFont));
 
     ret = true;
   }
@@ -69,6 +71,7 @@ bool Config::Write()
   address += writeBytes(address, (byte*)&cfgTimeFormat, sizeof(cfgTimeFormat));
   address += writeBytes(address, (byte*)&cfgBrightness, sizeof(cfgBrightness));
   address += writeBytes(address, (byte*)&cfgClockDelay, sizeof(cfgClockDelay));
+  address += writeBytes(address, (byte*)&cfgClockFont, sizeof(cfgClockFont));
 
   return ret;
 }
@@ -136,6 +139,17 @@ bool Config::GetCfgItem(int idxItem, void *data, size_t len)
         if(len == sizeof(cfgClockDelay))
         {
           *(int *)data = cfgClockDelay;
+        }
+        else
+        {
+          ret = false;
+        }
+        break ;
+
+      case CFG_CLOCKFONT:
+        if(len == sizeof(cfgClockFont))
+        {
+          strcpy((char *)data, cfgClockFont);
         }
         else
         {

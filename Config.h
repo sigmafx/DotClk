@@ -1,6 +1,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+typedef char FONTNAME[13 + 1];
+
 class Config
 {
   private:
@@ -9,6 +11,7 @@ class Config
     int cfgTimeFormat;
     int cfgBrightness;
     int cfgClockDelay;
+    FONTNAME cfgClockFont;
 
     int readBytes(int address, byte *data, size_t len);
     int writeBytes(int address, byte *data, size_t  len);
@@ -29,6 +32,7 @@ enum {
   CFG_TIMEFORMAT = 2,
   CFG_BRIGHTNESS = 3,
   CFG_CLOCKDELAY = 4,
+  CFG_CLOCKFONT = 5,
 };
 
 // DST

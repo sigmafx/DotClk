@@ -1,4 +1,4 @@
-#include "Arduino.h"
+#include <Arduino.h>
 #include "Scene.h"
 
 enum SpecialProc
@@ -56,6 +56,10 @@ bool Scene::Create(File& fileScene)
     fileScene.read(&lastFrameLayer, sizeof(lastFrameLayer));
     // Last Blank
     fileScene.read(&lastBlank, sizeof(lastBlank));
+
+    // Skip the 20 bytes for future features
+    byte space[20] ;
+    fileScene.read(space, sizeof(space));
   }
 
   // First and Last frame special processing?

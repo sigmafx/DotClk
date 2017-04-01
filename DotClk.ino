@@ -10,6 +10,7 @@
 #include "Scene.h"
 #include "Setup.h"
 #include "Config.h"
+#include "Utils.h"
 
 // Internal Fonts
 #include "./Fonts/Standard.h"
@@ -62,31 +63,21 @@ void setup()
 {  
   Dotmap dmpFont;
 
-  // Set GND
-  for (int nGnd = 0; nGnd < (sizeof(pinGND) / sizeof(int)); nGnd++)
+  // Serial debug
+  Serial.begin(9600);
+  //while(!Serial);
+
+  // Set GND for unused pins
+  for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
   {
     digitalWrite(pinGND[nGnd], LOW);
     pinMode(pinGND[nGnd], OUTPUT);
   }
   
-  // Serial debug
-  Serial.begin(9600);
-  //while(!Serial);
-
-  // Set brightness from config
-  int cfgBrightness;
-  config.GetCfgItem(CFG_BRIGHTNESS, &cfgBrightness, sizeof(cfgBrightness));
-  dmd.SetBrightness(cfgBrightness);
-
-  // RTC Compensation
-  // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
-  // For example, adjust = -100 is slows the clock by 11.92 ppm
-  
-  Teensy3Clock.compensate(0);
-    
   // Initialise the LED pin as an output.
   pinMode(pinLED, OUTPUT);
 
+  // Create internal fonts
   // System Font
   dmpFont.Create(564, 7);
   dmpFont.SetDotsFromRaw(SYSTEMFontDots, sizeof(SYSTEMFontDots));
@@ -111,18 +102,17 @@ void setup()
   // Initialise the DMD
   dmd.Initialise(pinEN, pinR1, pinR2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
 
+  // Set DMD brightness from config
+  int cfgBrightness;
+  config.GetCfgItem(CFG_BRIGHTNESS, &cfgBrightness, sizeof(cfgBrightness));
+  dmd.SetBrightness(cfgBrightness);
+
   // Start the DMD
   dmd.Start();
 
   // Boot
   Boot();
 
-  //File fileFontTrek = SD.open("Fonts/TREK.fnt");
-  //fontUser.Create(fileFontTrek);
-  //fileFontTrek.close();
-
-  //fontClock = fontStandard;
-  
   return;
 }
 
@@ -197,7 +187,7 @@ void doClock()
   unsigned long millisNow = millis();
   const char *blanking;
   char clock[15 + 1];
-  time_t timeNow = now();
+  time_t timeNow = NowDST();
 
   // Initialise the clock
   if(millisClockBeat == 0)
@@ -209,6 +199,12 @@ void doClock()
   if(millisSceneStart == 0)
   {
     millisSceneStart = millisNow;
+  }
+
+  if(!dirScenes)
+  {
+    // Scenes dir not open, try to init the SD Card
+    InitSD();
   }
 
   // 'Scenes' directory exists and is open?
@@ -370,21 +366,8 @@ void doClock()
 //---------------
 // Function: Boot
 //---------------
-bool Boot()
+void Boot()
 {
-  bool ret = false;
-  Dotmap    dmpBootText;
-  DmdFrame  frameBoot;
-
-  // Title
-  fontSystem.DmpFromString(dmpBootText, "DotClk");
-  frameBoot.DotBlt(dmpBootText, 0, 0, dmpBootText.GetWidth(), dmpBootText.GetHeight(), 1, 1);
-  
-  // Version
-  #define VERSION "Dave Robbo"
-  fontSystem.DmpFromString(dmpBootText, VERSION);
-  frameBoot.DotBlt(dmpBootText, 0, 0, dmpBootText.GetWidth(), dmpBootText.GetHeight(), 128 - dmpBootText.GetWidth(), 1);
-
   // Set up RTC
   setSyncProvider(getTeensy3Time);
   setSyncInterval(60); // Seconds
@@ -398,42 +381,75 @@ bool Boot()
     Serial.println("RTC has set the system time");
   }
 
+  // RTC Compensation
+  // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
+  // For example, adjust = -100 is slows the clock by 11.92 ppm
+  Teensy3Clock.compensate(0);
+
+  InitSD();
+}
+
+//-----------------
+// Function: InitSD
+//-----------------
+void InitSD()
+{
   // Connect to SD Card
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(BUILTIN_SDCARD))
+  if (SD.begin(BUILTIN_SDCARD))
   {
-    Serial.println("initialization failed!");
+    // Open the 'Scenes' directory
+    dirScenes = SD.open("/Scenes");
+
+    // Open the 'Fonts' directory
+    File dirFonts = SD.open("/Fonts");
+    int cntFonts = 0;
+    
+    if(dirFonts)
+    {
+      File font;
+
+      // Count the fonts
+      do
+      {
+        font = dirFonts.openNextFile();
+        if(font)
+        {
+          cntFonts++;
+          font.close();
+        }
+        else
+        {
+          break;
+        }
+      }
+      while(true);
+
+      // Rewind the font directory
+      dirFonts.rewindDirectory();
+
+      // Allocate memory for the font names
+      
+      // Now get each font name and store
+      do
+      {
+        font = dirFonts.openNextFile();
+        if(font)
+        {
+          char fontName[2];
+          
+          Font::GetFontName(font, fontName, sizeof(fontName));
+          font.close();
+        }
+        else
+        {
+          break;
+        }
+      }
+      while(true);      
+    }
+
+    dirFonts.close();
   }
-  else
-  {
-    Serial.println("initialization done.");
-  }
-
-  // Open the 'Scenes' directory
-  dirScenes = SD.open("/Scenes");
-
-  // Check the contents of the 'Scenes' directory - must only contain valid .scn files
-
-  // SD Status
-  fontSystem.DmpFromString(dmpBootText, "SD CARD: OK");
-  frameBoot.DotBlt(dmpBootText, 0, 0, dmpBootText.GetWidth(), dmpBootText.GetHeight(), 1, 9);
-
-  // RTC Status
-  fontSystem.DmpFromString(dmpBootText, "EEPROM: OK");
-  frameBoot.DotBlt(dmpBootText, 0, 0, dmpBootText.GetWidth(), dmpBootText.GetHeight(), 1, 17);
-
-  // Display
-  dmd.WaitSync();
-  dmd.SetFrame(frameBoot);
-
-  // Wait for 2s
-  delay(100);
-  
-  goto ERROR_EXIT;
-
-  ret = true;
-ERROR_EXIT:
-  return ret;
 }
 
 //-------------------------
@@ -442,25 +458,5 @@ ERROR_EXIT:
 time_t getTeensy3Time()
 {
   return Teensy3Clock.get();
-}
-
-//------------------
-// Function: FreeRam
-//------------------
-uint32_t FreeRam()
-{
-    uint32_t stackTop;
-    uint32_t heapTop;
-
-    // current position of the stack.
-    stackTop = (uint32_t) &stackTop;
-
-    // current position of heap.
-    void* hTop = malloc(1);
-    heapTop = (uint32_t) hTop;
-    free(hTop);
-
-    // The difference is the free, available ram.
-    return stackTop - heapTop;
 }
 
