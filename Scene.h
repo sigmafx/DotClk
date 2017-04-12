@@ -6,7 +6,7 @@
 
 class Scene
 {
-  public:
+  private:
     uint16_t firstFrameDelay;
     uint16_t firstFrameLayer;
     uint16_t firstBlank;
@@ -17,11 +17,19 @@ class Scene
     uint16_t lastBlank;
     uint16_t cntFrames;
     uint16_t curFrame;
+    byte clockStyle;
     short doFirst;
     short doLast;
-
     Dotmap dmpFrame;
 
+  public:
+    enum {
+      ClockStyleStd = 0,
+      ClockStyle1,
+      ClockStyle2,
+      ClockStyle3
+    };
+    
   public:
     Scene();
     ~Scene();
@@ -32,6 +40,7 @@ class Scene
     Dotmap& GetFrameDotmap();
     unsigned long GetFrameDelay();
     uint16_t GetFrameLayer();
+    byte GetClockStyle();
 };
 
 #endif

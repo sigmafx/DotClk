@@ -3,60 +3,64 @@
 
 typedef char FONTNAME[13 + 1];
 
-class Config
+typedef struct tagConfigItems
 {
-  private:
-    int cfgConfigItems;
     int cfgDST;
     int cfgTimeFormat;
     int cfgBrightness;
     int cfgClockDelay;
     FONTNAME cfgClockFont;
+    int cfgDotColour;
+} ConfigItems;
 
+class Config
+{
+  private:
+    int cfgCntItems;
+    ConfigItems cfgItems;
+
+  private:
+    bool readEeprom();
+    bool writeEeprom();
     int readBytes(int address, byte *data, size_t len);
     int writeBytes(int address, byte *data, size_t  len);
-    bool writeCfgItem(int idxItem);
 
   public:
+    static const int CntItems = 6;
+
+  // DST
+  enum {
+    CFG_DST_OFF = 0,
+    CFG_DST_ON = 1,
+  };
+  
+  // TIME FORMAT
+  enum {
+    CFG_TF_24HOUR = 0,
+    CFG_TF_12HOUR = 1,
+    CFG_TF_12HAMPM = 2,  
+  };
+  
+  // CLOCK DELAY
+  enum {
+    CFG_CD_5SECS = 0,
+    CFG_CD_10SECS,
+    CFG_CD_15SECS,
+    CFG_CD_30SECS,
+    CFG_CD_1MIN,
+    CFG_CD_2MINS,
+    CFG_CD_5MINS,
+  };
+
+  // DOT COLOUR
+  enum {
+    CFG_DC_RED = 0,    
+  };
+  
+  public:
     Config();
-    bool Read();
-    bool Write();
-    bool GetCfgItem(int idxItem, void *data, size_t len);
-    bool SetCfgItem(int idxItem, void *data, size_t  len, bool write = true);
-};
-
-// Index of config items
-enum {
-  CFG_CONFIGITEMS = 0,
-  CFG_DST = 1,
-  CFG_TIMEFORMAT = 2,
-  CFG_BRIGHTNESS = 3,
-  CFG_CLOCKDELAY = 4,
-  CFG_CLOCKFONT = 5,
-};
-
-// DST
-enum {
-  CFG_DST_OFF = 0,
-  CFG_DST_ON = 1,
-};
-
-// TIME FORMAT
-enum {
-  CFG_TF_24HOUR = 0,
-  CFG_TF_12HOUR = 1,
-  CFG_TF_12HAMPM = 2,  
-};
-
-// CLOCK DELAY
-enum {
-  CFG_CD_5SECS = 0,
-  CFG_CD_10SECS,
-  CFG_CD_15SECS,
-  CFG_CD_30SECS,
-  CFG_CD_1MIN,
-  CFG_CD_2MINS,
-  CFG_CD_5MINS,
+    const ConfigItems& GetCfgItems();
+    bool SetCfgItems(ConfigItems& cfgItems, bool write = true);
 };
 
 extern Config config;

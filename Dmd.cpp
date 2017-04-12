@@ -26,6 +26,7 @@ Dmd::Dmd()
   row = 0;
   active = false;
   brightness = 0;
+  colour = 0x00;
 
   // Set interrupt priority
   timerDmd.priority(200);
@@ -34,12 +35,14 @@ Dmd::Dmd()
 //---------------------
 // Function: Initialise
 //---------------------
-void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK)
+void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK)
 {
   // Screen pin outputs
   pinMode(pinEN, OUTPUT);
   pinMode(pinR1, OUTPUT);
   pinMode(pinR2, OUTPUT);
+  pinMode(pinG1, OUTPUT);
+  pinMode(pinG2, OUTPUT);
   pinMode(pinLA, OUTPUT);
   pinMode(pinLB, OUTPUT);
   pinMode(pinLC, OUTPUT);
@@ -51,6 +54,8 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinLA, int pinLB, int 
   digitalWrite(pinEN, LOW);
   digitalWrite(pinR1, LOW);
   digitalWrite(pinR2, LOW);
+  digitalWrite(pinG1, LOW);
+  digitalWrite(pinG2, LOW);
   digitalWrite(pinLA, LOW);
   digitalWrite(pinLB, LOW);
   digitalWrite(pinLC, LOW);
@@ -62,6 +67,8 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinLA, int pinLB, int 
   this->pinEN = pinEN;
   this->pinR1 = pinR1;
   this->pinR2 = pinR2;
+  this->pinG1 = pinG1;
+  this->pinG2 = pinG2;
   this->pinLA = pinLA;
   this->pinLB = pinLB;
   this->pinLC = pinLC;
@@ -128,6 +135,31 @@ int Dmd::GetBrightness()
   return brightness;
 }
 
+bool Dmd::SetColour(byte set)
+{
+  bool ret ;
+
+   // Check range
+  if(set > 2)
+  {
+    // Out of range, return
+    ret = false;
+  }
+  else
+  {
+    // Set brightness
+    colour = set;
+    ret = true;
+  }
+
+  return ret;  
+}
+
+byte Dmd::GetColour()
+{
+  return colour;  
+}
+
 //-------------------
 // Function: SetFrame
 //-------------------
@@ -176,6 +208,11 @@ void Dmd::IsrDmd()
   {
     timerDmd.begin(isrDmd, isrDelay);
   }
+  else
+  {
+    // Disable display
+    digitalWriteFast(pinEN, HIGH);
+  }
 }
 
 //--------
@@ -203,20 +240,30 @@ int Dmd::UpdateRow()
     {
       byte  data1,
             data2;
+      byte colourbits = colour + 1;
 
       // Extract the 2 data rows
       data1 = bufferInUse->dots[row][col];
       data1 = colBit & 1 ? (data1 >> 4) : (data1 & 0x0F);
+      data1 &= (1 << frame);
 
       data2 = bufferInUse->dots[row + 16][col];
       data2 = colBit & 1 ? ( data2 >> 4) : (data2 & 0x0F);
+      data2 &= (1 << frame);
 
       // Clock LOW
       digitalWriteFast(pinSK, LOW);
 
       // Set data
-      digitalWriteFast(pinR1, !(data1 & (1 << frame)));
-      digitalWriteFast(pinR2, !(data2 & (1 << frame)));
+      // Red
+      digitalWriteFast(pinR1, colourbits & 0x01 ? data1 : 0);
+      digitalWriteFast(pinR2, colourbits & 0x01 ? data2 : 0);
+      // Green
+      digitalWriteFast(pinG1, (colourbits & 0x02) ? data1 : 0);
+      digitalWriteFast(pinG2, (colourbits & 0x02) ? data2 : 0);
+      // Blue
+      //digitalWriteFast(pinB1, (colourbits & 0x04) ? data1 : 0);
+      //digitalWriteFast(pinB2, (colourbits & 0x04) ? data2 : 0);
 
       // Clock HIGH
       digitalWriteFast(pinSK, HIGH);
@@ -224,7 +271,7 @@ int Dmd::UpdateRow()
   }
 
   // Data latch LOW
-  digitalWriteFast(pinLT, LOW);
+  digitalWriteFast(pinLT, HIGH);
 
   // Set row address
   digitalWriteFast(pinLA, row & 0b0001);
@@ -233,7 +280,7 @@ int Dmd::UpdateRow()
   digitalWriteFast(pinLD, row & 0b1000);
 
   // Data latch HIGH
-  digitalWriteFast(pinLT, HIGH);
+  digitalWriteFast(pinLT, LOW);
 
   // Enable display
   digitalWriteFast(pinEN, LOW);

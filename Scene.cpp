@@ -57,8 +57,11 @@ bool Scene::Create(File& fileScene)
     // Last Blank
     fileScene.read(&lastBlank, sizeof(lastBlank));
 
-    // Skip the 20 bytes for future features
-    byte space[20] ;
+    // Clock Style
+    fileScene.read(&clockStyle, sizeof(clockStyle));
+
+    // Skip the 19 bytes for future features
+    byte space[19] ;
     fileScene.read(space, sizeof(space));
   }
 
@@ -184,5 +187,10 @@ uint16_t Scene::GetFrameLayer()
   }
   
   return ret;
+}
+
+byte Scene::GetClockStyle()
+{
+  return clockStyle;
 }
 

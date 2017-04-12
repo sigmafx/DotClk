@@ -10,10 +10,8 @@
 time_t NowDST()
 {
   time_t timeNow = now();
-  int cfgDST ;
 
-  config.GetCfgItem(CFG_DST, &cfgDST, sizeof(cfgDST));
-  if(cfgDST == CFG_DST_ON)
+  if(config.GetCfgItems().cfgDST == Config::CFG_DST_ON)
   {
     timeNow += 3600; // Add on an hour
   }

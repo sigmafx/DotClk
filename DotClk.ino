@@ -27,6 +27,8 @@ enum MODE {
 const int pinEN = 19 ;
 const int pinR1 = 20 ;
 const int pinR2 = 21 ;
+const int pinG1 = 3 ;
+const int pinG2 = 2 ;
 const int pinLA = 7 ;
 const int pinLB = 6 ;
 const int pinLC = 5 ;
@@ -100,12 +102,13 @@ void setup()
   fontStandard.SetCharInfoFromRaw(STANDARDFontCharInfo, sizeof(STANDARDFontCharInfo));
 
   // Initialise the DMD
-  dmd.Initialise(pinEN, pinR1, pinR2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
+  dmd.Initialise(pinEN, pinR1, pinR2, pinG1, pinG2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
 
   // Set DMD brightness from config
-  int cfgBrightness;
-  config.GetCfgItem(CFG_BRIGHTNESS, &cfgBrightness, sizeof(cfgBrightness));
-  dmd.SetBrightness(cfgBrightness);
+  dmd.SetBrightness(config.GetCfgItems().cfgBrightness);
+
+  // Set DMD colour from config
+  dmd.SetColour(config.GetCfgItems().cfgDotColour);
 
   // Start the DMD
   dmd.Start();
@@ -251,57 +254,54 @@ void doClock()
   }
 
   // Create the clock dotmap  
-  int cfgTimeFormat ;
-  config.GetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
-
-  switch(cfgTimeFormat)
+  switch(config.GetCfgItems().cfgTimeFormat)
   {
     default:
-    case CFG_TF_24HOUR:
+    case Config::CFG_TF_24HOUR:
       sprintf(clock, "%02d:%02d", hour(timeNow), minute(timeNow));
       break;
 
-    case CFG_TF_12HOUR:
+    case Config::CFG_TF_12HOUR:
       sprintf(clock, "%s%d:%02d", hourFormat12(timeNow) > 9 ? "" : " ", hourFormat12(timeNow), minute(timeNow));
       break;
 
-    case CFG_TF_12HAMPM:
+    case Config::CFG_TF_12HAMPM:
       sprintf(clock, "%s%d:%02d%s", hourFormat12(timeNow) > 9 ? "" : " ", hourFormat12(timeNow), minute(timeNow),isAM() ? "AM" : "PM");
       break;
   }
   
-  fontClock.DmpFromString(dmpClock, clock, blanking);
-
   int cfgClockDelay;
-  config.GetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
-  switch(cfgClockDelay)
+  switch(config.GetCfgItems().cfgClockDelay)
   {
     default:
-    case CFG_CD_5SECS:
+    case Config::CFG_CD_5SECS:
       cfgClockDelay = 5000;
       break;
-    case CFG_CD_10SECS:
+    case Config::CFG_CD_10SECS:
       cfgClockDelay = 10000;
       break;
-    case CFG_CD_15SECS:
+    case Config::CFG_CD_15SECS:
       cfgClockDelay = 15000;
       break;
-    case CFG_CD_30SECS:
+    case Config::CFG_CD_30SECS:
       cfgClockDelay = 30000;
       break;
-    case CFG_CD_1MIN:
+    case Config::CFG_CD_1MIN:
       cfgClockDelay = 60000;
       break;
-    case CFG_CD_2MINS:
+    case Config::CFG_CD_2MINS:
       cfgClockDelay = 120000;
       break;
-    case CFG_CD_5MINS:
+    case Config::CFG_CD_5MINS:
       cfgClockDelay = 300000;
       break;
   }
 
   if(millisNow - millisSceneStart < (uint16_t)cfgClockDelay)
   {
+    // Generate clock dotmap
+    fontClock.DmpFromString(dmpClock, clock, blanking);
+
     // Only showing the clock between animations
     frame.Clear();
     frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), (127 - dmpClock.GetWidth()) / 2, (31 - dmpClock.GetHeight())/2);
@@ -318,6 +318,37 @@ void doClock()
       // At the end of the scene?
       if(!scene.Eof())
       {
+        int xClock, yClock;
+
+        // Generate clock dotmap
+        switch(scene.GetClockStyle())
+        {
+          default:
+          case Scene::ClockStyleStd:
+            // Generate clock dotmap
+            fontClock.DmpFromString(dmpClock, clock, blanking);
+            xClock = (127 - dmpClock.GetWidth()) / 2;
+            break;
+
+          case Scene::ClockStyle1:
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = (39 - dmpClock.GetWidth()) / 2;
+            break;
+
+          case Scene::ClockStyle2:
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = ((39 - dmpClock.GetWidth()) / 2) + 44;
+            break;
+
+          case Scene::ClockStyle3:
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = ((39 - dmpClock.GetWidth()) / 2) + 88;
+            break;
+        }
+        
+        // Determine y position of clock
+        yClock = (31 - dmpClock.GetHeight()) / 2;
+
         // Get the next scene frame?
         if(millisSceneFrameDelay == 0 || (millisNow - millisSceneFrameDelay) > scene.GetFrameDelay())
         {
@@ -333,14 +364,14 @@ void doClock()
         if(scene.GetFrameLayer() == 0)
         {
           // Clock sits behind the animation frame
-          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), (127 - dmpClock.GetWidth()) / 2, (31 - dmpClock.GetHeight())/2);
+          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
           frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
         }
         else
         {
           // Clock sits above the animation frame
           frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
-          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), (127 - dmpClock.GetWidth()) / 2, (31 - dmpClock.GetHeight())/2);
+          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
         }
 
         // Update the DMD
