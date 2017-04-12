@@ -49,12 +49,13 @@ enum
   MENU_BRIGHTNESS = 3,
   MENU_CLOCKDELAY = 4,
   MENU_CLOCKFONT = 5,
+  MENU_DOTCOLOUR = 6,
 };
 
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(6)
+  MenuMainMenu() : Menu(7)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
@@ -63,6 +64,7 @@ struct MenuMainMenu : Menu
     menuItems[3] = "BRIGHTNESS";
     menuItems[4] = "CLOCK DELAY";
     menuItems[5] = "CLOCK FONT";
+    menuItems[6] = "DOT COLOUR";
     menuButtons[0] = "Back";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -118,20 +120,37 @@ struct MenuClockDelay : Menu
   }
 };
 
+struct MenuDotColour : Menu
+{
+  MenuDotColour() : Menu(7) 
+  {
+    menuTitle = "DOT COLOUR";
+    menuItems[0] = "RED";
+    menuItems[1] = "GREEN";
+    menuItems[2] = "YELLOW";
+    menuItems[3] = "BLUE";
+    menuItems[4] = "MAGENTA";
+    menuItems[5] = "CYAN";
+    menuItems[6] = "WHITE";
+    menuButtons[0] = "Back";
+    menuButtons[1] = "Prev";
+    menuButtons[2] = "Next";
+    menuButtons[3] = "Save";
+  }
+};
+
 // Standard menu objects
 MenuMainMenu menuMainMenu;
 MenuDST menuDST;
 MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
+MenuDotColour menuDotColour;
 Menu *menuClockFont = NULL;
 
 // Config Items
 time_t DateTime ;
-int cfgDST;
-int cfgTimeFormat;
-int Brightness ;
-int cfgClockDelay;
-int cfgClockFont;
+ConfigItems cfgItems;
+int cfgClockFont ;
 
 //------------------
 // Function: doSetup
@@ -149,12 +168,8 @@ bool doSetup(bool isInit)
   if(isInit)
   {
     // Initialise values from config
-    config.GetCfgItem(CFG_DST, &cfgDST, sizeof(cfgDST));
-    config.GetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
-    config.GetCfgItem(CFG_BRIGHTNESS, &Brightness, sizeof(Brightness));
-    config.GetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
-    cfgClockFont = 0;
-
+    cfgItems = config.GetCfgItems();
+    
     // Generate the Clock Font menu
     if(menuClockFont != NULL)
     {
@@ -205,24 +220,27 @@ bool doSetup(bool isInit)
             break;
 
           case MENU_DST: // DST
-            HandleStandard(frame, menuDST, true, cfgDST);
+            HandleStandard(frame, menuDST, true, cfgItems.cfgDST);
             break ;
 
           case MENU_TIMEFORMAT: // Time Format
-            HandleStandard(frame, menuTimeFormat, true, cfgTimeFormat);
+            HandleStandard(frame, menuTimeFormat, true, cfgItems.cfgTimeFormat);
             break ;
           
           case MENU_BRIGHTNESS: // Brightness
-            Brightness = dmd.GetBrightness();
-            HandleBrightness(frame, true, Brightness);
+            HandleBrightness(frame, true, cfgItems.cfgBrightness);
             break ;
 
           case MENU_CLOCKDELAY: // Clock Delay
-            HandleStandard(frame, menuClockDelay, true, cfgClockDelay);
+            HandleStandard(frame, menuClockDelay, true, cfgItems.cfgClockDelay);
             break ;
 
           case MENU_CLOCKFONT: // Clock Font
             HandleStandard(frame, *menuClockFont, true, cfgClockFont);
+            break ;
+
+          case MENU_DOTCOLOUR: // Dot Colour
+            HandleStandard(frame, menuDotColour, true, cfgItems.cfgDotColour);
             break ;
 
           default: // ERROR
@@ -255,13 +273,13 @@ bool doSetup(bool isInit)
         
       case MENU_DST: // Daylight Saving Time
       {
-        int menuRet = HandleStandard(frame, menuDST, false, cfgDST);
+        int menuRet = HandleStandard(frame, menuDST, false, cfgItems.cfgDST);
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
             // Write the DST to config
-            config.SetCfgItem(CFG_DST, &cfgDST, sizeof(cfgDST));
+            //config.SetCfgItem(CFG_DST, &cfgDST, sizeof(cfgDST));
           }
           
           showMainMenu = true;
@@ -271,12 +289,12 @@ bool doSetup(bool isInit)
 
       case MENU_TIMEFORMAT: // Time Format
       {
-        int menuRet = HandleStandard(frame, menuTimeFormat, false, cfgTimeFormat);
+        int menuRet = HandleStandard(frame, menuTimeFormat, false, cfgItems.cfgTimeFormat);
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
-            config.SetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
+            //config.SetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
           }
           showMainMenu = true;
         }
@@ -284,10 +302,10 @@ bool doSetup(bool isInit)
       }
         
       case MENU_BRIGHTNESS: // Brightness
-        if(!HandleBrightness(frame, false, Brightness))
+        if(!HandleBrightness(frame, false, cfgItems.cfgBrightness))
         {
           // Write the brightness to config
-          config.SetCfgItem(CFG_BRIGHTNESS, &Brightness, sizeof(Brightness));
+          //config.SetCfgItem(CFG_BRIGHTNESS, &Brightness, sizeof(Brightness));
           
           showMainMenu = true;
         }
@@ -295,12 +313,12 @@ bool doSetup(bool isInit)
       
       case MENU_CLOCKDELAY: // Clock Delay
       {
-        int menuRet = HandleStandard(frame, menuClockDelay, false, cfgClockDelay);
+        int menuRet = HandleStandard(frame, menuClockDelay, false, cfgItems.cfgClockDelay);
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
-            config.SetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
+            //config.SetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
           }
           showMainMenu = true;
         }
@@ -310,6 +328,16 @@ bool doSetup(bool isInit)
       case MENU_CLOCKFONT: // Clock Font
       {
         int menuRet = HandleStandard(frame, *menuClockFont, false, cfgClockFont);
+        if(menuRet != 0)
+        {
+          showMainMenu = true;
+        }
+        break ;
+      }
+
+      case MENU_DOTCOLOUR: // Dot Colour
+      {
+        int menuRet = HandleStandard(frame, menuDotColour, false, cfgItems.cfgDotColour);
         if(menuRet != 0)
         {
           showMainMenu = true;
