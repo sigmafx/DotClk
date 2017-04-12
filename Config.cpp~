@@ -19,6 +19,7 @@ Config::Config()
     // No config data, so setup some defaults and save
 <<<<<<< HEAD
 =======
+    Serial.println("Config defaulting");
 >>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     cfgItems.cfgDST = CFG_DST_OFF;
     cfgItems.cfgTimeFormat = CFG_TF_24HOUR;
@@ -29,6 +30,7 @@ Config::Config()
     cfgItems.cfgDotColour = CFG_DC_RED;
   
 =======
+    cfgItems.cfgDotColour = 0;
     
 >>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     writeEeprom();

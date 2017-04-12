@@ -266,6 +266,8 @@ int Dmd::UpdateRow()
       //digitalWriteFast(pinB1, (colourbits & 0x04) ? data1 : 0);
       //digitalWriteFast(pinB2, (colourbits & 0x04) ? data2 : 0);
 =======
+      digitalWriteFast(pinR1, (data1 & (1 << frame)));
+      digitalWriteFast(pinR2, (data2 & (1 << frame)));
 >>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
       // Clock HIGH

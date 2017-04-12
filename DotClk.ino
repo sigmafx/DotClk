@@ -1,7 +1,7 @@
 // Library Includes
 #include <SD.h>
 #include <SPI.h>
-#include <Time.h>
+#include <TimeLib.h>
 
 // Local Includes
 #include "Dmd.h"
@@ -67,7 +67,9 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  //while(!Serial);
+  while(!Serial);
+
+Serial.println("Dave");
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
@@ -106,9 +108,12 @@ void setup()
 
   // Set DMD brightness from config
   dmd.SetBrightness(config.GetCfgItems().cfgBrightness);
+<<<<<<< HEAD
 
   // Set DMD colour from config
   dmd.SetColour(config.GetCfgItems().cfgDotColour);
+=======
+>>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
   // Start the DMD
   dmd.Start();

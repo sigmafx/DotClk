@@ -7,6 +7,9 @@ typedef char FONTNAME[13 + 1];
 typedef struct tagConfigItems
 {
 =======
+typedef struct _tagConfigItems
+{
+    int cfgConfigItems;
 >>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     int cfgDST;
     int cfgTimeFormat;
@@ -32,6 +35,19 @@ class Config
 <<<<<<< HEAD
     static const int CntItems = 6;
 =======
+      static const int CntItems = 6;
+
+  public:
+    Config();
+    const ConfigItems& GetCfgItems();
+    bool SetCfgItems(ConfigItems& cfgItems, bool write = true);
+};
+
+// DST
+enum {
+  CFG_DST_OFF = 0,
+  CFG_DST_ON = 1,
+};
 >>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
   // DST

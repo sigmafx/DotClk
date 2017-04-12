@@ -16,9 +16,14 @@ Button::Button(int pinBtn)
   readLast = HIGH ;
 }
 
+int Button::ReadRaw()
+{
+  return digitalRead(pinBtn);
+}
+
 int Button::Read()
 {
-  unsigned int timeNow = millis();
+  unsigned long timeNow = millis();
   int ret = BTN_OFF;
   
   if(digitalRead(pinBtn) == LOW)

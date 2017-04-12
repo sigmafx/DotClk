@@ -22,6 +22,7 @@ class Button
   public:
     Button(int pinBtn);
     int Read();
+    int ReadRaw();
 };
 
 #endif
