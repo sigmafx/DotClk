@@ -3,36 +3,37 @@
 
 typedef char FONTNAME[13 + 1];
 
-class Config
+typedef struct _tagConfigItems
 {
-  private:
     int cfgConfigItems;
     int cfgDST;
     int cfgTimeFormat;
     int cfgBrightness;
     int cfgClockDelay;
     FONTNAME cfgClockFont;
+    int cfgDotColour;
+} ConfigItems;
 
+class Config
+{
+  private:
+    int cfgCntItems;
+    ConfigItems cfgItems;
+
+  private:
+    bool readEeprom();
+    bool writeEeprom();
     int readBytes(int address, byte *data, size_t len);
     int writeBytes(int address, byte *data, size_t  len);
     bool writeCfgItem(int idxItem);
 
   public:
-    Config();
-    bool Read();
-    bool Write();
-    bool GetCfgItem(int idxItem, void *data, size_t len);
-    bool SetCfgItem(int idxItem, void *data, size_t  len, bool write = true);
-};
+      static const int CntItems = 6;
 
-// Index of config items
-enum {
-  CFG_CONFIGITEMS = 0,
-  CFG_DST = 1,
-  CFG_TIMEFORMAT = 2,
-  CFG_BRIGHTNESS = 3,
-  CFG_CLOCKDELAY = 4,
-  CFG_CLOCKFONT = 5,
+  public:
+    Config();
+    const ConfigItems& GetCfgItems();
+    bool SetCfgItems(ConfigItems& cfgItems, bool write = true);
 };
 
 // DST

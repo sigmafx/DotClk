@@ -1,7 +1,7 @@
 // Library Includes
 #include <SD.h>
 #include <SPI.h>
-#include <Time.h>
+#include <TimeLib.h>
 
 // Local Includes
 #include "Dmd.h"
@@ -65,7 +65,9 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  //while(!Serial);
+  while(!Serial);
+
+Serial.println("Dave");
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
@@ -103,9 +105,7 @@ void setup()
   dmd.Initialise(pinEN, pinR1, pinR2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
 
   // Set DMD brightness from config
-  int cfgBrightness;
-  config.GetCfgItem(CFG_BRIGHTNESS, &cfgBrightness, sizeof(cfgBrightness));
-  dmd.SetBrightness(cfgBrightness);
+  dmd.SetBrightness(config.GetCfgItems().cfgBrightness);
 
   // Start the DMD
   dmd.Start();
@@ -251,10 +251,7 @@ void doClock()
   }
 
   // Create the clock dotmap  
-  int cfgTimeFormat ;
-  config.GetCfgItem(CFG_TIMEFORMAT, &cfgTimeFormat, sizeof(cfgTimeFormat));
-
-  switch(cfgTimeFormat)
+  switch(config.GetCfgItems().cfgTimeFormat)
   {
     default:
     case CFG_TF_24HOUR:
@@ -273,8 +270,7 @@ void doClock()
   fontClock.DmpFromString(dmpClock, clock, blanking);
 
   int cfgClockDelay;
-  config.GetCfgItem(CFG_CLOCKDELAY, &cfgClockDelay, sizeof(cfgClockDelay));
-  switch(cfgClockDelay)
+  switch(config.GetCfgItems().cfgClockDelay)
   {
     default:
     case CFG_CD_5SECS:

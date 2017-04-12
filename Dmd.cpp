@@ -212,14 +212,14 @@ int Dmd::UpdateRow()
       data2 = colBit & 1 ? ( data2 >> 4) : (data2 & 0x0F);
 
       // Clock LOW
-      digitalWriteFast(pinSK, LOW);
+      digitalWriteFast(pinSK, HIGH);
 
       // Set data
-      digitalWriteFast(pinR1, !(data1 & (1 << frame)));
-      digitalWriteFast(pinR2, !(data2 & (1 << frame)));
+      digitalWriteFast(pinR1, (data1 & (1 << frame)));
+      digitalWriteFast(pinR2, (data2 & (1 << frame)));
 
       // Clock HIGH
-      digitalWriteFast(pinSK, HIGH);
+      digitalWriteFast(pinSK, LOW);
     }
   }
 
