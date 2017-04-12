@@ -17,20 +17,13 @@ Config::Config()
   if(!readEeprom())
   {
     // No config data, so setup some defaults and save
-<<<<<<< HEAD
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     cfgItems.cfgDST = CFG_DST_OFF;
     cfgItems.cfgTimeFormat = CFG_TF_24HOUR;
     cfgItems.cfgBrightness = 10;
     cfgItems.cfgClockDelay = CFG_CD_5SECS;
     strcpy(cfgItems.cfgClockFont, "STANDARD");
-<<<<<<< HEAD
     cfgItems.cfgDotColour = CFG_DC_RED;
-  
-=======
-    
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
+
     writeEeprom();
   }
 }

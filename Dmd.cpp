@@ -252,10 +252,9 @@ int Dmd::UpdateRow()
       data2 &= (1 << frame);
 
       // Clock LOW
-      digitalWriteFast(pinSK, HIGH);
+      digitalWriteFast(pinSK, LOW);
 
       // Set data
-<<<<<<< HEAD
       // Red
       digitalWriteFast(pinR1, colourbits & 0x01 ? data1 : 0);
       digitalWriteFast(pinR2, colourbits & 0x01 ? data2 : 0);
@@ -265,11 +264,9 @@ int Dmd::UpdateRow()
       // Blue
       //digitalWriteFast(pinB1, (colourbits & 0x04) ? data1 : 0);
       //digitalWriteFast(pinB2, (colourbits & 0x04) ? data2 : 0);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
       // Clock HIGH
-      digitalWriteFast(pinSK, LOW);
+      digitalWriteFast(pinSK, HIGH);
     }
   }
 

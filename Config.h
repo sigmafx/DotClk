@@ -3,11 +3,8 @@
 
 typedef char FONTNAME[13 + 1];
 
-<<<<<<< HEAD
 typedef struct tagConfigItems
 {
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     int cfgDST;
     int cfgTimeFormat;
     int cfgBrightness;
@@ -29,10 +26,7 @@ class Config
     int writeBytes(int address, byte *data, size_t  len);
 
   public:
-<<<<<<< HEAD
     static const int CntItems = 6;
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
   // DST
   enum {

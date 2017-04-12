@@ -146,15 +146,11 @@ MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
 MenuDotColour menuDotColour;
 Menu *menuClockFont = NULL;
-MenuDotColour menuDotColour;
 
 // Config Items
 time_t DateTime ;
-<<<<<<< HEAD
 ConfigItems setItems;
 int cfgClockFont;
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
 
 //------------------
 // Function: doSetup
@@ -171,13 +167,9 @@ bool doSetup(bool isInit)
   // First time in, initialise
   if(isInit)
   {
-<<<<<<< HEAD
     setItems = config.GetCfgItems();
     cfgClockFont = 0;
 
-=======
-    
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
     // Generate the Clock Font menu
     if(menuClockFont != NULL)
     {
@@ -228,7 +220,6 @@ bool doSetup(bool isInit)
             break;
 
           case MENU_DST: // DST
-<<<<<<< HEAD
             HandleStandard(frame, menuDST, true, setItems.cfgDST);
             break ;
 
@@ -242,8 +233,6 @@ bool doSetup(bool isInit)
 
           case MENU_CLOCKDELAY: // Clock Delay
             HandleStandard(frame, menuClockDelay, true, setItems.cfgClockDelay);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
             break ;
 
           case MENU_CLOCKFONT: // Clock Font
@@ -251,10 +240,7 @@ bool doSetup(bool isInit)
             break ;
 
           case MENU_DOTCOLOUR: // Dot Colour
-<<<<<<< HEAD
             HandleStandard(frame, menuDotColour, true, setItems.cfgDotColour);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
             break ;
 
           default: // ERROR
@@ -287,18 +273,12 @@ bool doSetup(bool isInit)
         
       case MENU_DST: // Daylight Saving Time
       {
-<<<<<<< HEAD
         int menuRet = HandleStandard(frame, menuDST, false, setItems.cfgDST);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
-<<<<<<< HEAD
             config.SetCfgItems(setItems);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
           }
           
           showMainMenu = true;
@@ -308,18 +288,12 @@ bool doSetup(bool isInit)
 
       case MENU_TIMEFORMAT: // Time Format
       {
-<<<<<<< HEAD
         int menuRet = HandleStandard(frame, menuTimeFormat, false, setItems.cfgTimeFormat);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
-<<<<<<< HEAD
             config.SetCfgItems(setItems);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
           }
           showMainMenu = true;
         }
@@ -327,30 +301,21 @@ bool doSetup(bool isInit)
       }
         
       case MENU_BRIGHTNESS: // Brightness
-<<<<<<< HEAD
         if(!HandleBrightness(frame, false, setItems.cfgBrightness))
         {
           config.SetCfgItems(setItems);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
           showMainMenu = true;
         }
         break;
       
       case MENU_CLOCKDELAY: // Clock Delay
       {
-<<<<<<< HEAD
         int menuRet = HandleStandard(frame, menuClockDelay, false, setItems.cfgClockDelay);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
-<<<<<<< HEAD
             config.SetCfgItems(setItems);
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
           }
           showMainMenu = true;
         }
@@ -368,7 +333,6 @@ bool doSetup(bool isInit)
       }
 
       case MENU_DOTCOLOUR: // Dot Colour
-<<<<<<< HEAD
       {        
         int menuRet = HandleStandard(frame, menuDotColour, false, setItems.cfgDotColour);        
         if( menuRet != 0)
@@ -383,8 +347,6 @@ bool doSetup(bool isInit)
         break;
       }
       
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
       default:
         showMainMenu = true;
         break;

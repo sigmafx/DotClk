@@ -11,10 +11,7 @@ time_t NowDST()
 {
   time_t timeNow = now();
 
-<<<<<<< HEAD
   if(config.GetCfgItems().cfgDST == Config::CFG_DST_ON)
-=======
->>>>>>> b9b16bd08536ed072f5316c149b5112e4d1fb5d9
   {
     timeNow += SECS_PER_HOUR; // Add on an hour
   }
