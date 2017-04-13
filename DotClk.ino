@@ -333,18 +333,21 @@ void doClock()
             break;
 
           case Scene::ClockStyle1:
+            clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = (39 - dmpClock.GetWidth()) / 2;
+            xClock = (42 - dmpClock.GetWidth()) / 2;
             break;
 
           case Scene::ClockStyle2:
+            clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = ((39 - dmpClock.GetWidth()) / 2) + 44;
+            xClock = ((42 - dmpClock.GetWidth()) / 2) + 43;
             break;
 
           case Scene::ClockStyle3:
+            clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = ((39 - dmpClock.GetWidth()) / 2) + 88;
+            xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
             break;
         }
         

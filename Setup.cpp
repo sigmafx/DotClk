@@ -12,7 +12,8 @@
 
 // Menu Helper
 struct Menu;
-typedef void (*INITFN)(class Menu *);
+typedef void (*FEEDBACK)(int value);
+
 struct Menu
 {
   const char *menuTitle;
@@ -27,7 +28,8 @@ struct Menu
 // Function prototypes
 static void PaintTitle(DmdFrame& frame, const char *titleText);
 static void PaintButtons(DmdFrame& frame, const char *btnText[4]);
-static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue);
+static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue, FEEDBACK feedback = NULL);
+static void FeedbackDotColour(int value);
 static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue);
 static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue);
 
@@ -334,13 +336,12 @@ bool doSetup(bool isInit)
 
       case MENU_DOTCOLOUR: // Dot Colour
       {        
-        int menuRet = HandleStandard(frame, menuDotColour, false, setItems.cfgDotColour);        
+        int menuRet = HandleStandard(frame, menuDotColour, false, setItems.cfgDotColour, FeedbackDotColour);
         if( menuRet != 0)
         {
           if(menuRet == 1)
           {
             config.SetCfgItems(setItems);
-            dmd.SetColour(setItems.cfgDotColour);
           }
           showMainMenu = true;
         }
@@ -410,7 +411,7 @@ static void PaintButtons(DmdFrame& frame, const char *btnText[4])
 //-------------------------
 // Function: HandleStandard
 //-------------------------
-static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue)
+static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue, FEEDBACK feedback)
 {
   static int value ;
 
@@ -439,6 +440,10 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
     if(value < (menu.cntMenuItems - 1))
     {
       value++;
+      if(feedback != NULL)
+      {
+        feedback(value);
+      }
     }
   }
 
@@ -448,6 +453,10 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
     if(value > 0)
     {
       value-- ;
+      if(feedback != NULL)
+      {
+        feedback(value);
+      }
     }
   }
 
@@ -482,6 +491,14 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
   PaintButtons(frame, menu.menuButtons);
   
   return ret;
+}
+
+//----------------------------
+// Function: FeedbackDotColour
+//----------------------------
+static void FeedbackDotColour(int value)
+{
+  dmd.SetColour(value);  
 }
 
 //---------------------------
