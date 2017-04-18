@@ -349,6 +349,18 @@ void doClock()
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
             break;
+
+        case Scene::ClockStyle4:
+            clock[5] = '\0'; // Remove am/pm
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = (64 - dmpClock.GetWidth()) / 2;
+            break;
+
+          case Scene::ClockStyle5:
+            clock[5] = '\0'; // Remove am/pm
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = ((64 - dmpClock.GetWidth()) / 2) + 64;
+            break;
         }
         
         // Determine y position of clock

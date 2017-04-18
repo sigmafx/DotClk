@@ -27,7 +27,9 @@ class Scene
       ClockStyleStd = 0,
       ClockStyle1,
       ClockStyle2,
-      ClockStyle3
+      ClockStyle3,
+      ClockStyle4,
+      ClockStyle5,
     };
     
   public:
