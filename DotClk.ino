@@ -69,8 +69,6 @@ void setup()
   Serial.begin(9600);
   //while(!Serial);
 
-Serial.println("Dave");
-
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
   {
@@ -81,6 +79,9 @@ Serial.println("Dave");
   // Initialise the LED pin as an output.
   pinMode(pinLED, OUTPUT);
 
+  // Detect button presses for configuring the DMD type
+  InitDmdType();
+    
   // Create internal fonts
   // System Font
   dmpFont.Create(564, 7);
@@ -104,6 +105,7 @@ Serial.println("Dave");
   fontStandard.SetCharInfoFromRaw(STANDARDFontCharInfo, sizeof(STANDARDFontCharInfo));
 
   // Initialise the DMD
+  dmd.SetDmdType(config.GetCfgItems().cfgDmdType);
   dmd.Initialise(pinEN, pinR1, pinR2, pinG1, pinG2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
 
   // Set DMD brightness from config
@@ -131,13 +133,13 @@ void loop()
   switch(mode)
   {
     case modeClock:
-      if(btnEnter.Read() == BTN_ON_HOLD)
+      if(btnEnter.Read() == Button::Hold)
       {
         mode = modeOff;
         dmd.Stop();
       }
       else
-      if(btnMenu.Read() == BTN_RISING)
+      if(btnMenu.Read() == Button::Rising)
       {
         // Switch to setup mode
         mode = modeSetup;
@@ -157,9 +159,9 @@ void loop()
       break ;
 
     case modeOff:
-      if(btnEnter.Read() == BTN_RISING)
+      if(btnEnter.Read() == Button::Rising)
       {
-        while(btnEnter.Read() != BTN_OFF);
+        while(btnEnter.Read() != Button::Off);
       
         mode = modeClock;
         dmd.Start();
@@ -498,6 +500,32 @@ void InitSD()
 
     dirFonts.close();
   }
+}
+
+//----------------------
+// Function: InitDmdType
+//----------------------
+void InitDmdType()
+{
+  ConfigItems cfgItems = config.GetCfgItems();
+
+  if(btnMenu.ReadRaw() == Button::On)
+  {
+    cfgItems.cfgDmdType = 0;
+    config.SetCfgItems(cfgItems);
+  }
+  else
+  if(btnMinus.ReadRaw() == Button::On)
+  {
+    cfgItems.cfgDmdType = 1;
+    config.SetCfgItems(cfgItems);
+  }
+
+  // Wait for all buttons to be released
+  while(btnMenu.ReadRaw() == Button::On ||
+    btnMinus.ReadRaw() == Button::On ||
+    btnPlus.ReadRaw() == Button::On ||
+    btnEnter.ReadRaw() == Button::On) ;
 }
 
 //-------------------------

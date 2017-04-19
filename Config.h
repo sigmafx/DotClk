@@ -11,6 +11,7 @@ typedef struct tagConfigItems
     int cfgClockDelay;
     FONTNAME cfgClockFont;
     int cfgDotColour;
+    int cfgDmdType;
 } ConfigItems;
 
 class Config
@@ -26,7 +27,7 @@ class Config
     int writeBytes(int address, byte *data, size_t  len);
 
   public:
-    static const int CntItems = 6;
+    static const int CntItems = 7;
 
   // DST
   enum {

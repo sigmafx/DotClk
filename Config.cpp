@@ -23,6 +23,7 @@ Config::Config()
     cfgItems.cfgClockDelay = CFG_CD_5SECS;
     strcpy(cfgItems.cfgClockFont, "STANDARD");
     cfgItems.cfgDotColour = CFG_DC_RED;
+    cfgItems.cfgDmdType = 0;
 
     writeEeprom();
   }

@@ -18,13 +18,13 @@ Button::Button(int pinBtn)
 
 int Button::ReadRaw()
 {
-  return digitalRead(pinBtn);
+  return digitalRead(pinBtn) == LOW ? On : Off ;
 }
 
 int Button::Read()
 {
   unsigned long timeNow = millis();
-  int ret = BTN_OFF;
+  int ret = Button::Off;
   
   if(digitalRead(pinBtn) == LOW)
   {
@@ -43,18 +43,18 @@ int Button::Read()
           if((timeNow - timeLast) > timeHold)
           {
             // Button ON and HOLD
-            ret = BTN_ON_HOLD;
+            ret = Button::Hold;
           }
           else
           {
             // Button ON but not HOLD
-            ret = BTN_ON;
+            ret = Button::On;
           }
         }
         else
         {
           // Btn RISING
-          ret = BTN_RISING;
+          ret = Button::Rising;
           risen = true;
         }
       }

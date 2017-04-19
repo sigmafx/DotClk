@@ -343,6 +343,12 @@ bool doSetup(bool isInit)
           {
             config.SetCfgItems(setItems);
           }
+          else
+          {
+            // Reset colour back on 'Back' button
+            dmd.SetColour(setItems.cfgDotColour);
+          }
+          
           showMainMenu = true;
         }
         break;
@@ -428,13 +434,13 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
     value = initValue;
   }
 
-  if(btnMenuRead == BTN_RISING)
+  if(btnMenuRead == Button::Rising)
   {
     // Back
     ret = -1;
   }
 
-  if(btnPlusRead == BTN_RISING)
+  if(btnPlusRead == Button::Rising)
   {
     // Next
     if(value < (menu.cntMenuItems - 1))
@@ -447,7 +453,7 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
     }
   }
 
-  if(btnMinusRead == BTN_RISING)
+  if(btnMinusRead == Button::Rising)
   {
     // Prev
     if(value > 0)
@@ -460,7 +466,7 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
     }
   }
 
-  if(btnEnterRead == BTN_RISING)
+  if(btnEnterRead == Button::Rising)
   { 
     // Save
     initValue = value;    
@@ -521,14 +527,14 @@ static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
     value = initValue;
   }
   
-  if(btnMenuRead == BTN_RISING)
+  if(btnMenuRead == Button::Rising)
   {
     // Back
     dmd.SetBrightness(initValue);
     ret = false;
   }
 
-  if(btnPlusRead == BTN_RISING || btnPlusRead == BTN_ON_HOLD)
+  if(btnPlusRead == Button::Rising || btnPlusRead == Button::Hold)
   {
     // Up
     if(value < 63)
@@ -538,7 +544,7 @@ static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
     }
   }
         
-  if(btnMinusRead == BTN_RISING || btnMinusRead == BTN_ON_HOLD)
+  if(btnMinusRead == Button::Rising || btnMinusRead == Button::Hold)
   {
     // Down
     if(value > 0)
@@ -548,7 +554,7 @@ static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
     }
   }
   
-  if(btnEnterRead == BTN_RISING)
+  if(btnEnterRead == Button::Rising)
   { 
     // Save
     initValue = value;
@@ -603,13 +609,13 @@ static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initVa
     position = 0;
   }
   
-  if(btnMenuRead == BTN_RISING)
+  if(btnMenuRead == Button::Rising)
   {
     // Back
     ret = -1;
   }
 
-  if(btnPlusRead == BTN_RISING || btnPlusRead == BTN_ON_HOLD)
+  if(btnPlusRead == Button::Rising || btnPlusRead == Button::Hold)
   {
     // +
     if(position == 0)
@@ -625,7 +631,7 @@ static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initVa
     }
   }
         
-  if(btnMinusRead == BTN_RISING || btnMinusRead == BTN_ON_HOLD)
+  if(btnMinusRead == Button::Rising || btnMinusRead == Button::Hold)
   {
     // -
     if(position == 0)
@@ -641,7 +647,7 @@ static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initVa
     }
   }
   
-  if(btnEnterRead == BTN_RISING)
+  if(btnEnterRead == Button::Rising)
   {
     // Next / Save
     if(position == 0)

@@ -215,6 +215,14 @@ void Dmd::IsrDmd()
   }
 }
 
+//---------------------
+// Function: SetDmdType
+//---------------------
+void Dmd::SetDmdType(int dmdType)
+{
+  this->dmdType = dmdType;
+}
+
 //--------
 //--------
 // PRIVATE
@@ -250,6 +258,12 @@ int Dmd::UpdateRow()
       data2 = bufferInUse->dots[row + 16][col];
       data2 = colBit & 1 ? ( data2 >> 4) : (data2 & 0x0F);
       data2 &= (1 << frame);
+
+      if(dmdType == 1)
+      {
+        data1 = !data1;
+        data2 = !data2;
+      }
 
       // Clock LOW
       digitalWriteFast(pinSK, LOW);

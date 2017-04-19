@@ -19,7 +19,8 @@ class Dmd
     int row ;
     int brightness ;
     byte colour;
-
+    int dmdType ;
+    
     volatile bool active;
 
     int pinEN;
@@ -49,6 +50,7 @@ class Dmd
     void SetFrame(DmdFrame& frame);
     bool WaitSync(uint32_t timeout = 0);  
     void IsrDmd();
+    void SetDmdType(int dmdType);
     
 };
 
