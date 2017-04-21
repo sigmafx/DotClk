@@ -401,6 +401,16 @@ void doClock()
           frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
         }
 
+        // If debug on display the scene file name in the top left
+        if(config.GetCfgItems().cfgDebug != 0)
+        {
+          Dotmap dmpFilename ;
+
+          fontSystem.DmpFromString(dmpFilename, fileScene.name());
+          dmpFilename.ClearMask();
+          frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          
+        }
+        
         // Update the DMD
         dmd.WaitSync();
         dmd.SetFrame(frame);

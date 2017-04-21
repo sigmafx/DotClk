@@ -24,6 +24,7 @@ Config::Config()
     strcpy(cfgItems.cfgClockFont, "STANDARD");
     cfgItems.cfgDotColour = CFG_DC_RED;
     cfgItems.cfgDmdType = 0;
+    cfgItems.cfgDebug = 0;
 
     writeEeprom();
   }

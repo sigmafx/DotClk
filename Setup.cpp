@@ -52,12 +52,13 @@ enum
   MENU_CLOCKDELAY = 4,
   MENU_CLOCKFONT = 5,
   MENU_DOTCOLOUR = 6,
+  MENU_DEBUG = 7,
 };
 
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(7)
+  MenuMainMenu() : Menu(8)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
@@ -67,6 +68,7 @@ struct MenuMainMenu : Menu
     menuItems[4] = "CLOCK DELAY";
     menuItems[5] = "CLOCK FONT";
     menuItems[6] = "DOT COLOUR";
+    menuItems[7] = "DEBUG";
     menuButtons[0] = "Back";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -141,6 +143,20 @@ struct MenuDotColour : Menu
   }
 };
 
+struct MenuDebug : Menu
+{
+  MenuDebug() : Menu(2) 
+  {
+    menuTitle = "DEBUG";
+    menuItems[0] = "OFF";
+    menuItems[1] = "ON";
+    menuButtons[0] = "Back";
+    menuButtons[1] = "Prev";
+    menuButtons[2] = "Next";
+    menuButtons[3] = "Save";
+  }
+};
+
 // Standard menu objects
 MenuMainMenu menuMainMenu;
 MenuDST menuDST;
@@ -148,6 +164,8 @@ MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
 MenuDotColour menuDotColour;
 Menu *menuClockFont = NULL;
+MenuDebug menuDebug;
+
 FONTNAME *fontUserNames = NULL;
 
 // Config Items
@@ -304,6 +322,10 @@ bool doSetup(bool isInit)
             HandleStandard(frame, menuDotColour, true, setItems.cfgDotColour);
             break ;
 
+          case MENU_DEBUG: // Debug
+            HandleStandard(frame, menuDebug, true, setItems.cfgDebug);
+            break ;
+
           default: // ERROR
             showMainMenu = true;
             break ;
@@ -418,6 +440,20 @@ bool doSetup(bool isInit)
         break;
       }
       
+      case MENU_DEBUG: // Debug
+      {        
+        int menuRet = HandleStandard(frame, menuDebug, false, setItems.cfgDebug);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            config.SetCfgItems(setItems);
+          }          
+          showMainMenu = true;
+        }
+        break;
+      }
+
       default:
         showMainMenu = true;
         break;
