@@ -196,6 +196,7 @@ void doClock()
   static unsigned long millisClockBeat = 0;
   static unsigned long millisSceneStart = 0;
   static unsigned long millisSceneFrameDelay = 0;
+  static uint16_t curScene = 0;
   
   DmdFrame frame;
   Dotmap dmpFrame ;
@@ -231,15 +232,28 @@ void doClock()
     // Scene file open yet?
     if(!fileScene)
     {
-      // Open the next scene file
-      fileScene = dirScenes.openNextFile();
-      if(!fileScene)
+      uint16_t skip ;
+      
+      // Open the next random scene file
+      skip = random(0, 30);
+      for(int scene = 0; scene < skip; scene++)
       {
-        // End of the directory start again
-        dirScenes.rewindDirectory();
+        // This is a slow way to skip files in the directory, so I've limited it to skipping max 30 scenes.
         fileScene = dirScenes.openNextFile();
-      }
+        if(!fileScene)
+        {
+          // End of the directory start again
+          dirScenes.rewindDirectory();
+          fileScene = dirScenes.openNextFile();
+        }
 
+        // Close if not last scene file as this is the one we want to use
+        if(scene < (skip - 1))
+        {
+          fileScene.close();
+        }
+      }
+      
       if(fileScene)
       {
         if(!scene.Create(fileScene))
