@@ -83,35 +83,36 @@ void Dotmap::Create(int width, int height)
 //-----------------
 // Function: Create
 //-----------------
-void Dotmap::Create(File& fileDotmap)
+bool Dotmap::Create(File& fileDotmap)
 {
+  bool ret = true;
   uint16_t dotsWidth;
   uint16_t dotsHeight;
   uint16_t dotsBpp;
   uint16_t hasMask;
-//  uint16_t maskWidth;
-//  uint16_t maskHeight;
-//  uint16_t maskBpp;
   
   // Read the dotmap item header
-  fileDotmap.read(&dotsWidth, sizeof(dotsWidth));
-  fileDotmap.read(&dotsHeight, sizeof(dotsHeight));
-  fileDotmap.read(&dotsBpp, sizeof(dotsBpp));
-  fileDotmap.read(&hasMask, sizeof(hasMask));
-//  fileDotmap.read(&maskWidth, sizeof(maskWidth));
-//  fileDotmap.read(&maskHeight, sizeof(maskHeight));
-//  fileDotmap.read(&maskBpp, sizeof(maskBpp));
+  ret &= fileDotmap.read(&dotsWidth, sizeof(dotsWidth)) > -1;
+  ret &= fileDotmap.read(&dotsHeight, sizeof(dotsHeight)) > -1;
+  ret &= fileDotmap.read(&dotsBpp, sizeof(dotsBpp)) > -1;
+  ret &= fileDotmap.read(&hasMask, sizeof(hasMask)) > -1;
 
-  Create(dotsWidth, dotsHeight);
-  
-  // Read the dots data
-  fileDotmap.read(dots, widthBytesDots * height * sizeof(byte));
-
-  // Read the optional mask data
-  if(hasMask)
+  // Only open if we successfully read the dotmap header
+  if(ret)
   {
-    fileDotmap.read(mask, widthBytesMask * height * sizeof(byte));
+    Create(dotsWidth, dotsHeight);
+    
+    // Read the dots data
+    ret &= fileDotmap.read(dots, widthBytesDots * height * sizeof(byte)) > -1;
+  
+    // Read the optional mask data
+    if(hasMask)
+    {
+      ret &= fileDotmap.read(mask, widthBytesMask * height * sizeof(byte)) > -1;
+    }
   }
+  
+  return ret;
 }
 
 //-------------------------

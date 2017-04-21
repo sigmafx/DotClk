@@ -11,6 +11,7 @@
 #include "Setup.h"
 #include "Config.h"
 #include "Utils.h"
+#include "Version.h"
 
 // Internal Fonts
 #include "./Fonts/Standard.h"
@@ -119,7 +120,7 @@ void setup()
 
   // Boot
   Boot();
-
+  
   return;
 }
 
@@ -219,6 +220,7 @@ void doClock()
   if(!dirScenes)
   {
     // Scenes dir not open, try to init the SD Card
+    Serial.println("Attempting to InitSD");
     InitSD();
   }
 
@@ -240,7 +242,11 @@ void doClock()
 
       if(fileScene)
       {
-        scene.Create(fileScene);
+        if(!scene.Create(fileScene))
+        {
+          // Couldn't read the scene - we can't continue to use it
+          dirScenes.close();
+        }
       }
       else
       {
@@ -436,8 +442,19 @@ void doClock()
 //---------------
 void Boot()
 {
-  // Show the version number of the firmware
+  DmdFrame frame;
+  Dotmap dmpBootMsg;
+  char bootMsg[16 + 1];
   
+  // Show the version number of the firmware
+  sprintf(bootMsg, "DOTCLK V%s", VERSION);
+  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
+  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (32 - dmpBootMsg.GetHeight())/2);
+
+  // Update the DMD
+  dmd.WaitSync();
+  dmd.SetFrame(frame);
+
   // Set up RTC
   setSyncProvider(getTeensy3Time);
   setSyncInterval(60); // Seconds
@@ -461,6 +478,9 @@ void Boot()
   
   // Init the clock font
   InitClockFont();
+
+  // Pause before returning
+  delay(2000);
 }
 
 //-----------------
@@ -468,12 +488,16 @@ void Boot()
 //-----------------
 void InitSD()
 {
-  // Connect to SD Card
-  if (SD.begin(BUILTIN_SDCARD))
+  if(dirScenes)
   {
-    // Open the 'Scenes' directory
-    dirScenes = SD.open("/Scenes");
+    dirScenes.close();
   }
+  
+  // Connect to SD Card
+  SD.begin(BUILTIN_SDCARD);
+
+  // Open the 'Scenes' directory
+  dirScenes = SD.open("/Scenes");
 }
 
 //------------------------

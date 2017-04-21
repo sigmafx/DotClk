@@ -21,50 +21,54 @@ Scene::~Scene()
 
 bool Scene::Create(File& fileScene)
 {
-  bool ret = false;
+  bool ret = true;
   uint16_t version;
   uint16_t cntItemDotmap;
   uint16_t cntItemStoryboard;
 
   // version
-  fileScene.read(&version, sizeof(version));
+  ret &= fileScene.read(&version, sizeof(version)) > -1;
 
   // cntItemDotmap
-  fileScene.read(&cntItemDotmap, sizeof(cntItemDotmap));
+  ret &= fileScene.read(&cntItemDotmap, sizeof(cntItemDotmap)) > -1;
   
   // cntItemStoryboard
-  fileScene.read(&cntItemStoryboard, sizeof(cntItemStoryboard));
+  ret &= fileScene.read(&cntItemStoryboard, sizeof(cntItemStoryboard)) > -1;
 
-  // Read storyboard
-  for (int idxItem = 0; idxItem < cntItemStoryboard; idxItem++)
+  // Only read the scene if we read the header successfully
+  if(ret)
   {
-    // First Frame Delay
-    fileScene.read(&firstFrameDelay, sizeof(firstFrameDelay));
-    // First Frame Layer
-    fileScene.read(&firstFrameLayer, sizeof(firstFrameLayer));
-    // First Blank
-    fileScene.read(&firstBlank, sizeof(firstBlank));
-
-    // Frame Delay
-    fileScene.read(&frameDelay, sizeof(frameDelay));
-    //Frame Layer
-    fileScene.read(&frameLayer, sizeof(frameLayer));
-
-    // Last Frame Delay
-    fileScene.read(&lastFrameDelay, sizeof(lastFrameDelay));    
-    // Last  Frame Layer
-    fileScene.read(&lastFrameLayer, sizeof(lastFrameLayer));
-    // Last Blank
-    fileScene.read(&lastBlank, sizeof(lastBlank));
-
-    // Clock Style
-    fileScene.read(&clockStyle, sizeof(clockStyle));
-
-    // Skip the 19 bytes for future features
-    byte space[19] ;
-    fileScene.read(space, sizeof(space));
+    // Read storyboard
+    for (int idxItem = 0; idxItem < cntItemStoryboard; idxItem++)
+    {
+      // First Frame Delay
+      ret &= fileScene.read(&firstFrameDelay, sizeof(firstFrameDelay)) > -1;
+      // First Frame Layer
+      ret &= fileScene.read(&firstFrameLayer, sizeof(firstFrameLayer)) > -1;
+      // First Blank
+      ret &= fileScene.read(&firstBlank, sizeof(firstBlank)) > -1;
+  
+      // Frame Delay
+      ret &= fileScene.read(&frameDelay, sizeof(frameDelay)) > -1;
+      //Frame Layer
+      ret &= fileScene.read(&frameLayer, sizeof(frameLayer)) > -1;
+  
+      // Last Frame Delay
+      ret &= fileScene.read(&lastFrameDelay, sizeof(lastFrameDelay)) > -1;    
+      // Last  Frame Layer
+      ret &= fileScene.read(&lastFrameLayer, sizeof(lastFrameLayer)) > -1;
+      // Last Blank
+      ret &= fileScene.read(&lastBlank, sizeof(lastBlank)) > -1;
+  
+      // Clock Style
+      ret &= fileScene.read(&clockStyle, sizeof(clockStyle)) > -1;
+  
+      // Skip the 19 bytes for future features
+      byte space[19] ;
+      ret &= fileScene.read(space, sizeof(space)) > -1;
+    }
   }
-
+  
   // First and Last frame special processing?
   doFirst = (firstFrameDelay == 0 ? NA : TODO);
   doLast = (lastFrameDelay == 0 ? NA : TODO);
@@ -72,8 +76,6 @@ bool Scene::Create(File& fileScene)
   cntFrames = cntItemDotmap;
   curFrame = 0;
   
-  ret = true;
-
   return ret;  
 }
 
@@ -84,7 +86,7 @@ bool Scene::Eof()
 
 bool Scene::NextFrame(File& fileScene)
 {
-  bool ret = false;
+  bool ret = true;
   
   if(doFirst == TODO)
   {
@@ -117,7 +119,7 @@ bool Scene::NextFrame(File& fileScene)
   else
   if(curFrame < cntFrames)
   {
-    dmpFrame.Create(fileScene);
+    ret = dmpFrame.Create(fileScene);
     curFrame++;
   }
   else
@@ -131,11 +133,10 @@ bool Scene::NextFrame(File& fileScene)
     else
     {
       // End of file
+      ret = false;
       goto ERROR_EXIT;
     }
   }
-
-  ret = true;
 
 ERROR_EXIT:
 

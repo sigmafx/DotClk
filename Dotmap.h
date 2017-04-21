@@ -22,7 +22,7 @@ class Dotmap
 
     Dotmap& operator=(const Dotmap& other);
     void Create(const int width, const int height);
-    void Create(File& fileDotmap);
+    bool Create(File& fileDotmap);
 
     bool SetDotsFromRaw(const byte *data, uint16_t len);
     bool SetMaskFromRaw(const byte *data, uint16_t len);
