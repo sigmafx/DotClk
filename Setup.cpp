@@ -52,13 +52,14 @@ enum
   MENU_CLOCKDELAY = 4,
   MENU_CLOCKFONT = 5,
   MENU_DOTCOLOUR = 6,
-  MENU_DEBUG = 7,
+  MENU_SHOWBRAND = 7,
+  MENU_DEBUG = 8,
 };
 
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(8)
+  MenuMainMenu() : Menu(9)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
@@ -68,7 +69,8 @@ struct MenuMainMenu : Menu
     menuItems[4] = "CLOCK DELAY";
     menuItems[5] = "CLOCK FONT";
     menuItems[6] = "DOT COLOUR";
-    menuItems[7] = "DEBUG";
+    menuItems[7] = "SHOW BRAND";
+    menuItems[8] = "DEBUG";
     menuButtons[0] = "Back";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -143,6 +145,23 @@ struct MenuDotColour : Menu
   }
 };
 
+struct MenuShowBrand : Menu
+{
+  MenuShowBrand() : Menu(5) 
+  {
+    menuTitle = "SHOW BRAND";
+    menuItems[0] = "NEVER";
+    menuItems[1] = "EVERY 2";
+    menuItems[2] = "EVERY 5";
+    menuItems[3] = "EVERY 10";
+    menuItems[4] = "EVERY 20";
+    menuButtons[0] = "Back";
+    menuButtons[1] = "Prev";
+    menuButtons[2] = "Next";
+    menuButtons[3] = "Save";
+  }
+};
+
 struct MenuDebug : Menu
 {
   MenuDebug() : Menu(2) 
@@ -164,6 +183,7 @@ MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
 MenuDotColour menuDotColour;
 Menu *menuClockFont = NULL;
+MenuShowBrand menuShowBrand;
 MenuDebug menuDebug;
 
 FONTNAME *fontUserNames = NULL;
@@ -322,6 +342,10 @@ bool doSetup(bool isInit)
             HandleStandard(frame, menuDotColour, true, setItems.cfgDotColour);
             break ;
 
+          case MENU_SHOWBRAND: // Show Brand
+            HandleStandard(frame, menuShowBrand, true, setItems.cfgShowBrand);
+            break ;
+
           case MENU_DEBUG: // Debug
             HandleStandard(frame, menuDebug, true, setItems.cfgDebug);
             break ;
@@ -440,6 +464,20 @@ bool doSetup(bool isInit)
         break;
       }
       
+      case MENU_SHOWBRAND: // Show Brand
+      {
+        int menuRet = HandleStandard(frame, menuShowBrand, false, setItems.cfgShowBrand);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            config.SetCfgItems(setItems);
+          }          
+          showMainMenu = true;
+        }
+        break;
+      }
+
       case MENU_DEBUG: // Debug
       {        
         int menuRet = HandleStandard(frame, menuDebug, false, setItems.cfgDebug);

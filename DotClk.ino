@@ -233,25 +233,58 @@ void doClock()
     if(!fileScene)
     {
       uint16_t skip ;
-      
-      // Open the next random scene file
-      skip = random(0, 30);
-      for(int scene = 0; scene < skip; scene++)
-      {
-        // This is a slow way to skip files in the directory, so I've limited it to skipping max 30 scenes.
-        fileScene = dirScenes.openNextFile();
-        if(!fileScene)
-        {
-          // End of the directory start again
-          dirScenes.rewindDirectory();
-          fileScene = dirScenes.openNextFile();
-        }
+      uint16_t divider ;
 
-        // Close if not last scene file as this is the one we want to use
-        if(scene < (skip - 1))
+      curScene++;
+      switch(config.GetCfgItems().cfgShowBrand)
+      {
+        default:
+        case Config::CFG_SB_NEVER:
+          divider = 0;
+          break ;
+      
+        case Config::CFG_SB_EVERY2:
+          divider = 2;
+          break ;
+
+        case Config::CFG_SB_EVERY5:
+          divider = 5;
+          break ;
+
+        case Config::CFG_SB_EVERY10:
+          divider = 10;
+          break ;
+
+        case Config::CFG_SB_EVERY20:
+          divider = 20;
+          break ;
+      }
+
+      if((divider > 0 && (curScene % divider) > 0) || !SD.exists("/Scenes/brand.scn"))
+      {
+        // Open the next random scene file
+        skip = random(0, 30);
+        for(int scene = 0; scene < skip; scene++)
         {
-          fileScene.close();
+          // This is a slow way to skip files in the directory, so I've limited it to skipping max 30 scenes.
+          fileScene = dirScenes.openNextFile();
+          if(!fileScene)
+          {
+            // End of the directory start again
+            dirScenes.rewindDirectory();
+            fileScene = dirScenes.openNextFile();
+          }
+  
+          // Close if not last scene file as this is the one we want to use
+          if(scene < (skip - 1))
+          {
+            fileScene.close();
+          }
         }
+      }
+      else
+      {
+        fileScene = SD.open("/Scenes/brand.scn");
       }
       
       if(fileScene)
