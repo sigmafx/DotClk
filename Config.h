@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-typedef char FONTNAME[13 + 1];
+#include "Font.h"
 
 typedef struct tagConfigItems
 {

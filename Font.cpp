@@ -30,13 +30,16 @@ void Font::Create(File& fileFont)
   byte FontNameLen ;
   char FontName[255 + 1] ;
 
+  // Rewind the file
+  fileFont.seek(0);
+  
   // Read the font header
   fileFont.read(&Version, sizeof(Version));
   fileFont.read(&FontNameLen, sizeof(FontNameLen));
   memset(FontName, '\0', sizeof(FontName));
   fileFont.read(FontName, FontNameLen);
   fileFont.read(&CntFontInfo, sizeof(CntFontInfo));
-
+  
   // Read the font item info structure
   Delete();
   charInfo = new FontCharInfo[CntFontInfo] ;
@@ -154,21 +157,48 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
   return dmp;
 }
 
-byte Font::GetFontName(File& fileFont, char *fontName, size_t sizeFontName)
+byte Font::GetFontCount()
+{
+  byte ret = 0;
+
+  // Open the 'Fonts' directory
+  File dirFonts = SD.open("/Fonts");    
+  if(dirFonts)
+  {
+    do
+    {
+      File fileFont = dirFonts.openNextFile();
+      if(fileFont)
+      {
+        ret++;
+        fileFont.close();
+      }
+      else
+      {
+        break;
+      }
+    }
+    while(true);
+
+    dirFonts.close();
+  }
+
+  return ret;
+}
+
+byte Font::GetFontName(File& fileFont, FONTNAME fontName)
 {
   uint16_t Version;
   byte FontNameLen ;
 
+  fileFont.seek(0);
   fileFont.read(&Version, sizeof(Version));
   fileFont.read(&FontNameLen, sizeof(FontNameLen));
 
-  if(fontName != NULL && sizeFontName > 0)
-  {
-    FontNameLen = min((int)(FontNameLen + 1), (int)sizeFontName);
-    
-    fileFont.read(fontName, FontNameLen);
-    fontName[FontNameLen - 1] = '\0';
-  }
+  FontNameLen = min((int)(FontNameLen + 1), (int)sizeof(FONTNAME));
+  
+  fileFont.read(fontName, FontNameLen);
+  fontName[FontNameLen - 1] = '\0';
 
   return FontNameLen;
 }

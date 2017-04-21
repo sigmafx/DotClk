@@ -46,8 +46,8 @@ const int pinGND[] = { 16, 17, 18, 22, 23 } ;
 Font fontStandard;
 Font fontSystem;
 Font fontMenu;
-Font fontUser;
-Font& fontClock = fontStandard;
+Font *fontUser = NULL;
+Font *fontClock;
 
 // Buttons
 Button btnMenu(pinBtnMenu);
@@ -135,18 +135,20 @@ void loop()
     case modeClock:
       if(btnEnter.Read() == Button::Hold)
       {
+        // From Clock mode to Off mode
         mode = modeOff;
         dmd.Stop();
       }
       else
       if(btnMenu.Read() == Button::Rising)
       {
-        // Switch to setup mode
+        // From Clock mode to Setup mode
         mode = modeSetup;
         doSetup(true);
       }
       else
       {
+        // Clock mode
         doClock();
       }
       break;
@@ -154,7 +156,11 @@ void loop()
     case modeSetup:
       if(!doSetup(false))
       {
+        // Returning from Setup mode
         mode = modeClock;
+
+        // Need to force a refresh of the clock font as it may have been changed by the user
+        InitClockFont();
       }
       break ;
 
@@ -162,13 +168,15 @@ void loop()
       if(btnEnter.Read() == Button::Rising)
       {
         while(btnEnter.Read() != Button::Off);
-      
+
+        // From Off mode to Clock mode
         mode = modeClock;
         dmd.Start();
       }
       break ;
 
     default:
+      // Default position is to Clock mode
       mode = modeClock;
       break;
   }
@@ -304,7 +312,7 @@ void doClock()
   if(millisNow - millisSceneStart < (uint16_t)cfgClockDelay)
   {
     // Generate clock dotmap
-    fontClock.DmpFromString(dmpClock, clock, blanking);
+    fontClock->DmpFromString(dmpClock, clock, blanking);
 
     // Only showing the clock between animations
     frame.Clear();
@@ -330,7 +338,7 @@ void doClock()
           default:
           case Scene::ClockStyleStd:
             // Generate clock dotmap
-            fontClock.DmpFromString(dmpClock, clock, blanking);
+            fontClock->DmpFromString(dmpClock, clock, blanking);
             xClock = (127 - dmpClock.GetWidth()) / 2;
             break;
 
@@ -418,6 +426,8 @@ void doClock()
 //---------------
 void Boot()
 {
+  // Show the version number of the firmware
+  
   // Set up RTC
   setSyncProvider(getTeensy3Time);
   setSyncInterval(60); // Seconds
@@ -436,7 +446,11 @@ void Boot()
   // For example, adjust = -100 is slows the clock by 11.92 ppm
   Teensy3Clock.compensate(0);
 
+  // Init the SD Card
   InitSD();
+  
+  // Init the clock font
+  InitClockFont();
 }
 
 //-----------------
@@ -449,56 +463,90 @@ void InitSD()
   {
     // Open the 'Scenes' directory
     dirScenes = SD.open("/Scenes");
+  }
+}
 
-    // Open the 'Fonts' directory
-    File dirFonts = SD.open("/Fonts");
-    int cntFonts = 0;
-    
-    if(dirFonts)
+//------------------------
+// Function: InitClockFont
+//------------------------
+void InitClockFont()
+{
+  // Check the SD is available
+  if(SD.exists("/Fonts"))
+  {
+    // Delete any previous user font loaded
+    if(fontUser != NULL)
     {
-      File font;
-
-      // Count the fonts
-      do
-      {
-        font = dirFonts.openNextFile();
-        if(font)
-        {
-          cntFonts++;
-          font.close();
-        }
-        else
-        {
-          break;
-        }
-      }
-      while(true);
-
-      // Rewind the font directory
-      dirFonts.rewindDirectory();
-
-      // Allocate memory for the font names
-      
-      // Now get each font name and store
-      do
-      {
-        font = dirFonts.openNextFile();
-        if(font)
-        {
-          char fontName[2];
-          
-          Font::GetFontName(font, fontName, sizeof(fontName));
-          font.close();
-        }
-        else
-        {
-          break;
-        }
-      }
-      while(true);      
+      delete fontUser;
+      fontUser = NULL;
     }
 
-    dirFonts.close();
+    // Do we need to find the font?
+    if(strcmp(config.GetCfgItems().cfgClockFont, "STANDARD") != 0)
+    {
+      // Open the 'Fonts' directory
+      File dirFonts = SD.open("/Fonts");    
+      if(dirFonts)
+      {
+        do
+        {
+          // Open each font file
+          File fileFont = dirFonts.openNextFile();
+          if(fileFont)
+          {
+            FONTNAME fontName ;
+
+            // Get the font name and compare against the user selected one in config
+            Font::GetFontName(fileFont, fontName);
+            if(strcmp(config.GetCfgItems().cfgClockFont, fontName) == 0)
+            {
+              // Found our font, now load it for use
+              fontUser = new Font();
+
+              // Load the font
+              fontUser->Create(fileFont);
+              break;
+            }
+
+            fileFont.close();
+          }
+          else
+          {
+            // Problem reading a font file so quit the loop
+            break;
+          }
+        }
+        while(true);
+
+        if(fontUser != NULL)
+        {
+          // Use the user font requested
+          fontClock = fontUser;
+        }
+        else
+        {
+          // Configured font entry not found - Default to STANDARD
+          fontClock = &fontStandard;
+        }
+
+        dirFonts.close();
+      }
+      else
+      {
+        // No Fonts directory found - Default to STANDARD
+        fontClock = &fontStandard;
+      }
+    }
+    else
+    {
+      // Standard font is in use - this is a built in font
+      fontClock = &fontStandard;
+    }
+  }
+  else
+  {
+    // No SD Card found - Default to STANDARD
+    fontClock = &fontStandard;
   }
 }
 

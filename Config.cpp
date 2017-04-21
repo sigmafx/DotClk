@@ -80,8 +80,7 @@ bool Config::readEeprom()
   if(cfgCntItems == CntItems)
   {
     // Read the remaining items
-    readBytes(address, (byte*)&cfgItems, sizeof(cfgItems));
-
+    readBytes(address, (byte*)&cfgItems, sizeof(cfgItems));    
     ret = true;
   }
   else

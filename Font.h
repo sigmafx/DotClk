@@ -13,6 +13,8 @@ typedef struct tagFontCharInfo
 } FontCharInfo ;
 #pragma pack()
 
+typedef char FONTNAME[12 + 1];
+
 class Font
 {
   private:
@@ -35,8 +37,8 @@ class Font
     Dotmap& DmpFromString(Dotmap& dmp, const char *string, const char *blanking = NULL);
 
   public:
-    static byte GetFontName(File& fileFont, char *fontName, size_t sizeFontName);
-
+    static byte GetFontName(File& fileFont, FONTNAME fontName);
+    static byte GetFontCount();
 };
 
 #endif

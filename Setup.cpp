@@ -148,6 +148,7 @@ MenuTimeFormat menuTimeFormat;
 MenuClockDelay menuClockDelay;
 MenuDotColour menuDotColour;
 Menu *menuClockFont = NULL;
+FONTNAME *fontUserNames = NULL;
 
 // Config Items
 time_t DateTime ;
@@ -169,6 +170,7 @@ bool doSetup(bool isInit)
   // First time in, initialise
   if(isInit)
   {
+    // Retrieve the config items as they set
     setItems = config.GetCfgItems();
     cfgClockFont = 0;
 
@@ -178,12 +180,69 @@ bool doSetup(bool isInit)
       // Delete the previous menu
       delete menuClockFont;
     }
+
+    // Determine number of user fonts
+    byte fontCount = Font::GetFontCount();
+
+    // Allocate space for the names and read
+    if(fontUserNames != NULL)
+    {
+      delete[] fontUserNames;
+      fontUserNames = NULL;
+    }
+    fontUserNames = new FONTNAME[fontCount];
+
+    File dirFonts = SD.open("/Fonts");
+    if(dirFonts)
+    {
+      int fontCur ;
+
+      // Default to STANDARD until we find a matching font
+      cfgClockFont = 0;
+
+      for(fontCur = 0; fontCur < fontCount; fontCur++)
+      {
+        File fileFont = dirFonts.openNextFile();
+        if(fileFont)
+        {
+          Font::GetFontName(fileFont, fontUserNames[fontCur]);
+          fileFont.close();
+
+          if(strcmp(setItems.cfgClockFont, fontUserNames[fontCur]) == 0)
+          {
+            cfgClockFont = fontCur + 1;
+          }
+        }
+        else
+        {
+          // Problem opening the font file
+          fontCount = 0;
+          cfgClockFont = 0;
+          break;
+        }
+      }
+
+      dirFonts.close();
+    }
+    else
+    {
+      // Couldn't open the Fonts directory
+      fontCount = 0;
+      cfgClockFont = 0;
+    }
+    
     // Allocate the new menu
-    menuClockFont = new Menu(2);
+    menuClockFont = new Menu(fontCount + 1);
+    
     // Populate it
     menuClockFont->menuTitle = "CLOCK FONT";
+    // STANDARD is always entry 0
     menuClockFont->menuItems[0] = "STANDARD";
-    menuClockFont->menuItems[1] = "TREK";
+    // Add any user fonts from entry 1 onwards
+    for(int fontCur = 0; fontCur < fontCount; fontCur++)
+    {
+      menuClockFont->menuItems[fontCur + 1] = fontUserNames[fontCur];
+    }
     menuClockFont->menuButtons[0] = "Back";
     menuClockFont->menuButtons[1] = "Prev";
     menuClockFont->menuButtons[2] = "Next";
@@ -329,6 +388,11 @@ bool doSetup(bool isInit)
         int menuRet = HandleStandard(frame, *menuClockFont, false, cfgClockFont);
         if(menuRet != 0)
         {
+          if(menuRet == 1)
+          {
+            strcpy(setItems.cfgClockFont, menuClockFont->menuItems[cfgClockFont]);
+            config.SetCfgItems(setItems);
+          }
           showMainMenu = true;
         }
         break ;
