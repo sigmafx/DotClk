@@ -235,7 +235,10 @@ void doClock()
       uint16_t skip ;
       uint16_t divider ;
 
+      // Keep track of the scene count
       curScene++;
+
+      // Determine when and if the Brand scene should be shown
       switch(config.GetCfgItems().cfgShowBrand)
       {
         default:
@@ -260,7 +263,7 @@ void doClock()
           break ;
       }
 
-      if((divider > 0 && (curScene % divider) > 0) || !SD.exists("/Scenes/brand.scn"))
+      if((divider == 0 && (curScene % divider > 0)) || !SD.exists("/Scenes/brand.scn"))
       {
         // Open the next random scene file
         skip = random(0, 30);
@@ -281,9 +284,23 @@ void doClock()
             fileScene.close();
           }
         }
+
+        if(stricmp(fileScene.name(), "BRAND.SCN") == 0)
+        {
+          fileScene.close();
+          
+          fileScene = dirScenes.openNextFile();
+          if(!fileScene)
+          {
+            // End of the directory start again
+            dirScenes.rewindDirectory();
+            fileScene = dirScenes.openNextFile();
+          }
+        }
       }
       else
       {
+        // Use the brand scene
         fileScene = SD.open("/Scenes/brand.scn");
       }
       
