@@ -24,6 +24,8 @@ enum MODE {
   modeOff = 3,
 };
 
+typedef char FILENAME[8+1+3+1];
+
 // Pin Assignments
 const int pinEN = 19 ;
 const int pinR1 = 20 ;
@@ -58,6 +60,10 @@ Button btnEnter(pinBtnEnter);
 
 // Scene directory
 File dirScenes;
+
+// Scene files list
+FILENAME *sceneNames = NULL;
+uint16_t cntScenes = 0;
 
 //----------------
 // Function: setup
@@ -285,7 +291,7 @@ void doClock()
           }
         }
 
-        if(stricmp(fileScene.name(), "BRAND.SCN") == 0)
+        if(strcmp(fileScene.name(), "BRAND.SCN") == 0)
         {
           fileScene.close();
           
@@ -562,6 +568,73 @@ void InitSD()
 
   // Open the 'Scenes' directory
   dirScenes = SD.open("/Scenes");
+}
+
+//---------------------
+// Function: InitScenes
+//---------------------
+void InitScenes()
+{
+  File dirScenes = SD.open("/Scenes");
+  
+  // Scene directory exists?
+  if(dirScenes)
+  {
+    // Previous list exists?
+    if(sceneNames != NULL)
+    {
+      // Free it
+      free(sceneNames);
+
+      cntScenes = 0;
+      sceneNames = NULL;
+    }
+
+    // Rewind the directory
+    dirScenes.rewindDirectory();
+
+    // Loop on each scene file
+    while(true)
+    {
+      File fileScene;
+  
+      // Open the next scene file
+      fileScene = dirScenes.openNextFile();
+      if(fileScene)
+      {
+        // Don't want to store the branding scene
+        if(strcmp(fileScene.name(), "BRAND.SCN") != 0)
+        {
+          if(sceneNames == NULL)
+          {
+            // First time, malloc
+            cntScenes = 1;        
+            sceneNames = (FILENAME *)malloc(sizeof(FILENAME));
+          }
+          else
+          {
+            // Subsequent time, realloc
+            cntScenes++;
+            sceneNames = (FILENAME *)realloc(sceneNames, sizeof(FILENAME) * (cntScenes));
+          }
+
+          // Copy the file name into the ever expanding array
+          strcpy(sceneNames[cntScenes - 1], fileScene.name());
+        }
+
+        // Close the file
+        fileScene.close();
+      }
+      else
+      {
+        // End of directory
+        break;
+      }
+    }
+
+    // Close the directory
+    dirScenes.close();
+  }
 }
 
 //------------------------
