@@ -18,6 +18,10 @@
 #include "./Fonts/System.h"
 #include "./Fonts/Menu.h"
 
+#define CPU_RESTART_ADDR (uint32_t *)0xE000ED0C
+#define CPU_RESTART_VAL 0x5FA0004
+#define CPU_RESTART (*CPU_RESTART_ADDR = CPU_RESTART_VAL);
+
 enum MODE {
   modeSetup = 1,
   modeClock = 2,
@@ -227,8 +231,11 @@ void doClock()
   if(!dirScenes)
   {
     // Scenes dir not open, try to init the SD Card
-    Serial.println("Attempting to InitSD");
-    InitSD();
+    if(InitSD())
+    {
+      // SD Card now available - reboot
+      CPU_RESTART;
+    }
   }
 
   // 'Scenes' directory exists and is open?
@@ -238,7 +245,6 @@ void doClock()
     // Scene file open yet?
     if(!fileScene)
     {
-      uint16_t skip ;
       uint16_t divider ;
 
       // Keep track of the scene count
@@ -269,39 +275,15 @@ void doClock()
           break ;
       }
 
-      if((divider == 0 && (curScene % divider > 0)) || !SD.exists("/Scenes/brand.scn"))
+      if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
       {
-        // Open the next random scene file
-        skip = random(0, 30);
-        for(int scene = 0; scene < skip; scene++)
+        // Open the next scene file
+        fileScene = dirScenes.openNextFile();
+        if(!fileScene)
         {
-          // This is a slow way to skip files in the directory, so I've limited it to skipping max 30 scenes.
+          // End of the directory start again
+          dirScenes.rewindDirectory();
           fileScene = dirScenes.openNextFile();
-          if(!fileScene)
-          {
-            // End of the directory start again
-            dirScenes.rewindDirectory();
-            fileScene = dirScenes.openNextFile();
-          }
-  
-          // Close if not last scene file as this is the one we want to use
-          if(scene < (skip - 1))
-          {
-            fileScene.close();
-          }
-        }
-
-        if(strcmp(fileScene.name(), "BRAND.SCN") == 0)
-        {
-          fileScene.close();
-          
-          fileScene = dirScenes.openNextFile();
-          if(!fileScene)
-          {
-            // End of the directory start again
-            dirScenes.rewindDirectory();
-            fileScene = dirScenes.openNextFile();
-          }
         }
       }
       else
@@ -315,12 +297,14 @@ void doClock()
         if(!scene.Create(fileScene))
         {
           // Couldn't read the scene - we can't continue to use it
+          fileScene.close();
           dirScenes.close();
         }
       }
       else
       {
         // Problem occurred, close the Scenes directory as we can't continue to use it
+        fileScene.close();
         dirScenes.close();
       }
     }
@@ -481,8 +465,18 @@ void doClock()
         if(config.GetCfgItems().cfgDebug != 0)
         {
           Dotmap dmpFilename ;
+          FILENAME sceneName ;
+          char *dot ;
 
-          fontSystem.DmpFromString(dmpFilename, fileScene.name());
+          // Extract file name and truncate at fullstop
+          strcpy(sceneName, fileScene.name());
+          dot = strstr(sceneName, ".");
+          if(dot != NULL)
+          {
+            *dot = '\0';
+          }
+
+          fontSystem.DmpFromString(dmpFilename, sceneName);
           dmpFilename.ClearMask();
           frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          
         }
@@ -515,6 +509,8 @@ void Boot()
   DmdFrame frame;
   Dotmap dmpBootMsg;
   char bootMsg[16 + 1];
+  unsigned long timeBootStart = millis();
+  unsigned long timeBootDurn ;
   
   // Show the version number of the firmware
   sprintf(bootMsg, "DOTCLK V%s", VERSION);
@@ -544,19 +540,28 @@ void Boot()
   Teensy3Clock.compensate(0);
 
   // Init the SD Card
-  InitSD();
-  
-  // Init the clock font
+  if(InitSD())
+  {  
+    // Init the scene file name list
+    InitScenes();
+  }
+
+  // Init the clock font - SD card is optional as STANDARD font can be used
   InitClockFont();
 
-  // Pause before returning
-  delay(2000);
+  // Pause at least 2 seconds
+  timeBootDurn = millis() - timeBootStart;
+  if(timeBootDurn < 2000)
+  {
+    // Pause before returning
+    delay(2000 - timeBootDurn);
+  }
 }
 
 //-----------------
 // Function: InitSD
 //-----------------
-void InitSD()
+bool InitSD()
 {
   if(dirScenes)
   {
@@ -568,6 +573,8 @@ void InitSD()
 
   // Open the 'Scenes' directory
   dirScenes = SD.open("/Scenes");
+
+  return dirScenes ? true : false;
 }
 
 //---------------------
@@ -642,7 +649,7 @@ void InitScenes()
 //------------------------
 void InitClockFont()
 {
-  // Check the SD is available
+  // Check the SD is available with Fonts directory
   if(SD.exists("/Fonts"))
   {
     // Delete any previous user font loaded
