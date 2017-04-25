@@ -62,12 +62,10 @@ Button btnPlus(pinBtnPlus);
 Button btnMinus(pinBtnMinus);
 Button btnEnter(pinBtnEnter);
 
-// Scene directory
-File dirScenes;
-
 // Scene files list
 FILENAME *sceneNames = NULL;
 uint16_t cntScenes = 0;
+uint16_t curScene = 0;
 
 //----------------
 // Function: setup
@@ -228,7 +226,7 @@ void doClock()
     millisSceneStart = millisNow;
   }
 
-  if(!dirScenes)
+  if(cntScenes == 0)
   {
     // Scenes dir not open, try to init the SD Card
     if(InitSD())
@@ -238,76 +236,72 @@ void doClock()
     }
   }
 
-  // 'Scenes' directory exists and is open?
-  // This means we can start using the scenes files in the directory
-  if(dirScenes)
+  // Scenes to open and scene file not open yet?
+  if(cntScenes > 0 && !fileScene)
   {
-    // Scene file open yet?
-    if(!fileScene)
+    uint16_t divider ;
+
+    // Determine when and if the Brand scene should be shown
+    switch(config.GetCfgItems().cfgShowBrand)
     {
-      uint16_t divider ;
+      default:
+      case Config::CFG_SB_NEVER:
+        divider = 0;
+        break ;
+    
+      case Config::CFG_SB_EVERY2:
+        divider = 2;
+        break ;
 
-      // Keep track of the scene count
-      curScene++;
+      case Config::CFG_SB_EVERY5:
+        divider = 5;
+        break ;
 
-      // Determine when and if the Brand scene should be shown
-      switch(config.GetCfgItems().cfgShowBrand)
-      {
-        default:
-        case Config::CFG_SB_NEVER:
-          divider = 0;
-          break ;
+      case Config::CFG_SB_EVERY10:
+        divider = 10;
+        break ;
+
+      case Config::CFG_SB_EVERY20:
+        divider = 20;
+        break ;
+    }
+
+    if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
+    {
+      char pathScene[255 + 1];
       
-        case Config::CFG_SB_EVERY2:
-          divider = 2;
-          break ;
-
-        case Config::CFG_SB_EVERY5:
-          divider = 5;
-          break ;
-
-        case Config::CFG_SB_EVERY10:
-          divider = 10;
-          break ;
-
-        case Config::CFG_SB_EVERY20:
-          divider = 20;
-          break ;
-      }
-
-      if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
+      // Open the next scene file
+      sprintf(pathScene, "/Scenes/%s", sceneNames[curScene % cntScenes]);
+      fileScene = SD.open(pathScene);
+      if(!fileScene)
       {
-        // Open the next scene file
-        fileScene = dirScenes.openNextFile();
-        if(!fileScene)
-        {
-          // End of the directory start again
-          dirScenes.rewindDirectory();
-          fileScene = dirScenes.openNextFile();
-        }
-      }
-      else
-      {
-        // Use the brand scene
-        fileScene = SD.open("/Scenes/brand.scn");
-      }
-      
-      if(fileScene)
-      {
-        if(!scene.Create(fileScene))
-        {
-          // Couldn't read the scene - we can't continue to use it
-          fileScene.close();
-          dirScenes.close();
-        }
-      }
-      else
-      {
-        // Problem occurred, close the Scenes directory as we can't continue to use it
-        fileScene.close();
-        dirScenes.close();
+        // SD Card not inserted
+        cntScenes = 0;
       }
     }
+    else
+    {
+      // Use the brand scene
+      fileScene = SD.open("/Scenes/brand.scn");
+      if(!fileScene)
+      {
+        // SD Card not inserted
+        cntScenes = 0;
+      }
+    }
+    
+    if(fileScene)
+    {
+      // Creste the scene object from the scene file
+      if(!scene.Create(fileScene))
+      {
+        // SD Card not inserted
+        cntScenes = 0;
+      }
+    }
+
+    // Keep track of the scene count
+    curScene++;
   }
 
   // Generate the clock dotmap as this is always used whether hidden behind a scene frame or part of it through the mask or on top
@@ -385,7 +379,7 @@ void doClock()
   else
   {  
     // At least one scene file exists
-    if(fileScene)
+    if(cntScenes > 0 && fileScene)
     {
       // At the end of the scene?
       if(!scene.Eof())
@@ -461,7 +455,7 @@ void doClock()
           frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
         }
 
-        // If debug on display the scene file name in the top left
+        // If debug on, display the scene file name in the top left
         if(config.GetCfgItems().cfgDebug != 0)
         {
           Dotmap dmpFilename ;
@@ -563,18 +557,11 @@ void Boot()
 //-----------------
 bool InitSD()
 {
-  if(dirScenes)
-  {
-    dirScenes.close();
-  }
-  
   // Connect to SD Card
   SD.begin(BUILTIN_SDCARD);
 
-  // Open the 'Scenes' directory
-  dirScenes = SD.open("/Scenes");
-
-  return dirScenes ? true : false;
+  // Return whether we can see the Scenes directory
+  return SD.exists("/Scenes") ? true : false;
 }
 
 //---------------------
