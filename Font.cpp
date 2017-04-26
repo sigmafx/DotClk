@@ -92,21 +92,15 @@ ERROR_EXIT:
 
 Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blanking)
 {
-
   int widthString;
   int destXOffset;
+  int destXOffsetRetainMask;
   int thisChar;
   
   // Determine total width of the returned dotmap from the chars being requested
   widthString = 0;
   for (thisChar = 0; thisChar < (int)(strlen(string) - 1); thisChar++)
   {
-//    Serial.println("*********************");
-//    Serial.print(string[thisChar]);
-//    Serial.print(",");
-//    Serial.print(GetCharWidth(string[thisChar]));
-//    Serial.println("");
-    
     widthString += GetCharWidth(string[thisChar]);
     widthString -= GetCharKerning(string[thisChar]);
   }
@@ -118,18 +112,12 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
 
   // Now build up the dotmap
   destXOffset = 0;
+  destXOffsetRetainMask = 0;
   for (int thisChar = 0; thisChar < (int)strlen(string); thisChar++)
   {
     int thisCharWidth = GetCharWidth(string[thisChar]);
     int thisCharOffset = GetCharOffset(string[thisChar]);
-
-
-//    Serial.println("*********************");
-//    Serial.print(string[thisChar]);
-//    Serial.print(",");
-//    Serial.print(GetCharOffset(string[thisChar]));
-//    Serial.println("");
-
+    
     for(int srcY = 0, destY = 0; srcY < dmpFont.GetHeight(); srcY++, destY++)
     {
       for(int srcX = thisCharOffset, destX = destXOffset; srcX < (thisCharOffset + thisCharWidth); srcX++, destX++)
@@ -137,12 +125,22 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
         if(blanking != NULL && blanking[thisChar] == '-')
         {
           dmp.SetDot(destX, destY, 0x00);
-          dmp.SetMask(destX, destY, 0x01);
+          if(destX >= destXOffsetRetainMask)
+          {
+            dmp.SetMask(destX, destY, 0x01);
+          }
         }
         else
         {
           dmp.SetDot(destX, destY, dmpFont.GetDot(srcX, srcY));
-          dmp.SetMask(destX, destY, dmpFont.GetMask(srcX, srcY));
+          if(destX < destXOffsetRetainMask)
+          {
+            dmp.SetMask(destX, destY, dmpFont.GetMask(srcX, srcY) & dmp.GetMask(destX, destY));
+          }
+          else
+          {
+            dmp.SetMask(destX, destY, dmpFont.GetMask(srcX, srcY));
+          }
         }
       }
     }
@@ -151,6 +149,7 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
     destXOffset += thisCharWidth;
 
     // Adjust for kerning
+    destXOffsetRetainMask = destXOffset;
     destXOffset -= GetCharKerning(string[thisChar]);
   }
   
