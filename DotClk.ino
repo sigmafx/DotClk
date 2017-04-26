@@ -239,6 +239,7 @@ void doClock()
   // Scenes to open and scene file not open yet?
   if(cntScenes > 0 && !fileScene)
   {
+    char pathScene[255 + 1];
     uint16_t divider ;
 
     // Determine when and if the Brand scene should be shown
@@ -268,28 +269,20 @@ void doClock()
 
     if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
     {
-      char pathScene[255 + 1];
-      
       // Open the next scene file
       sprintf(pathScene, "/Scenes/%s", sceneNames[curScene % cntScenes]);
-      fileScene = SD.open(pathScene);
-      if(!fileScene)
-      {
-        // SD Card not inserted
-        cntScenes = 0;
-      }
     }
     else
     {
       // Use the brand scene
-      fileScene = SD.open("/Scenes/brand.scn");
-      if(!fileScene)
-      {
-        // SD Card not inserted
-        cntScenes = 0;
-      }
+      strcpy(pathScene, "/Scenes/brand.scn");
     }
     
+    if(SD.exists(pathScene))
+    {
+      fileScene = SD.open(pathScene);
+    }
+
     if(fileScene)
     {
       // Creste the scene object from the scene file
@@ -299,7 +292,12 @@ void doClock()
         cntScenes = 0;
       }
     }
-
+    else
+    {
+      // SD Card not inserted
+      cntScenes = 0;
+    }
+    
     // Keep track of the scene count
     curScene++;
   }
@@ -363,7 +361,7 @@ void doClock()
       break;
   }
 
-  if(millisNow - millisSceneStart < (uint16_t)cfgClockDelay)
+  if(cntScenes == 0 || millisNow - millisSceneStart < (uint16_t)cfgClockDelay)
   {
     // Generate clock dotmap
     fontClock->DmpFromString(dmpClock, clock, blanking);
@@ -379,7 +377,7 @@ void doClock()
   else
   {  
     // At least one scene file exists
-    if(cntScenes > 0 && fileScene)
+    if(fileScene)
     {
       // At the end of the scene?
       if(!scene.Eof())
