@@ -379,8 +379,25 @@ void doClock()
     // At least one scene file exists
     if(fileScene)
     {
-      // At the end of the scene?
-      if(!scene.Eof())
+      // Get the next scene frame?
+      if(millisSceneFrameDelay == 0 || (millisNow - millisSceneFrameDelay) > scene.GetFrameDelay())
+      {
+        // At the end of the scene?
+        if(!scene.Eof())
+        {
+          // First frame or next frame
+          scene.NextFrame(fileScene);
+          millisSceneFrameDelay = millisNow;
+        }
+        else
+        {
+          // Finished the scene close it
+          fileScene.close();
+        }
+      }
+
+      // Still open after next frame processing?
+      if(fileScene)
       {
         int xClock, yClock;
 
@@ -428,14 +445,6 @@ void doClock()
         // Determine y position of clock
         yClock = (31 - dmpClock.GetHeight()) / 2;
 
-        // Get the next scene frame?
-        if(millisSceneFrameDelay == 0 || (millisNow - millisSceneFrameDelay) > scene.GetFrameDelay())
-        {
-          // First frame or next frame
-          scene.NextFrame(fileScene);
-          millisSceneFrameDelay = millisNow;
-        }
-
         // Get the frame dotmap
         dmpFrame = scene.GetFrameDotmap();
 
@@ -479,10 +488,8 @@ void doClock()
       }
       else
       {
-        // Finished the scene, show the clock again
-        fileScene.close();
-        millisSceneStart = millisNow;
-        millisSceneFrameDelay = 0;
+          // Finished the scene so revert to the clock
+          millisSceneStart = millisNow;        
       }
     }
     else
