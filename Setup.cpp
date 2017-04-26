@@ -71,7 +71,7 @@ struct MenuMainMenu : Menu
     menuItems[6] = "DOT COLOUR";
     menuItems[7] = "SHOW BRAND";
     menuItems[8] = "DEBUG";
-    menuButtons[0] = "Back";
+    menuButtons[0] = "Exit";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
     menuButtons[3] = "Edit";

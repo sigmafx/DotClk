@@ -488,7 +488,7 @@ void doClock()
       }
       else
       {
-          // Finished the scene so revert to the clock
+          // Finished the scene, show the clock again
           millisSceneStart = millisNow;        
       }
     }
