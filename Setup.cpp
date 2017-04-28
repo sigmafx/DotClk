@@ -1,13 +1,12 @@
 #include <Arduino.h>
 #include <Time.h>
 
+#include "Globals.h"
+
 #include "Setup.h"
-#include "Button.h"
 #include "Font.h"
 #include "DmdFrame.h"
 #include "Dotmap.h"
-#include "Dmd.h"
-#include "Config.h"
 #include "Utils.h"
 
 // Menu Helper
@@ -31,46 +30,41 @@ static void PaintButtons(DmdFrame& frame, const char *btnText[4]);
 static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initValue, FEEDBACK feedback = NULL);
 static void FeedbackDotColour(int value);
 static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue);
-static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue);
+static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isInit, time_t& initValue);
 
-// External objects - see DmdClock source
-extern Font fontMenu;
-extern Font fontSystem;
-extern Button btnMenu;
-extern Button btnPlus;
-extern Button btnMinus;
-extern Button btnEnter;
-extern Dmd dmd;
-
-// Menu IDs
+// Menu IDs and running order
 enum
 {
   MENU_SETTIME = 0,
-  MENU_DST = 1,
-  MENU_TIMEFORMAT = 2,
-  MENU_BRIGHTNESS = 3,
-  MENU_CLOCKDELAY = 4,
-  MENU_CLOCKFONT = 5,
-  MENU_DOTCOLOUR = 6,
-  MENU_SHOWBRAND = 7,
-  MENU_DEBUG = 8,
+  MENU_DST,
+  MENU_TIMEFORMAT,
+  MENU_SLEEPTIME,
+  MENU_WAKETIME,
+  MENU_BRIGHTNESS,
+  MENU_CLOCKDELAY,
+  MENU_CLOCKFONT,
+  MENU_DOTCOLOUR,
+  MENU_SHOWBRAND,
+  MENU_DEBUG,
 };
 
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(9)
+  MenuMainMenu() : Menu(11)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
     menuItems[1] = "DST";
     menuItems[2] = "TIME FORMAT";
-    menuItems[3] = "BRIGHTNESS";
-    menuItems[4] = "CLOCK DELAY";
-    menuItems[5] = "CLOCK FONT";
-    menuItems[6] = "DOT COLOUR";
-    menuItems[7] = "SHOW BRAND";
-    menuItems[8] = "DEBUG";
+    menuItems[3] = "SLEEP TIME";
+    menuItems[4] = "WAKE TIME";
+    menuItems[5] = "BRIGHTNESS";
+    menuItems[6] = "CLOCK DELAY";
+    menuItems[7] = "CLOCK FONT";
+    menuItems[8] = "DOT COLOUR";
+    menuItems[9] = "SHOW BRAND";
+    menuItems[10] = "DEBUG";
     menuButtons[0] = "Exit";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -315,7 +309,7 @@ bool doSetup(bool isInit)
         {
           case MENU_SETTIME: // Set Time
             DateTime = NowDST();
-            HandleSetTime(frame, false, true, DateTime);
+            HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], false, true, DateTime);
             break;
 
           case MENU_DST: // DST
@@ -326,6 +320,14 @@ bool doSetup(bool isInit)
             HandleStandard(frame, menuTimeFormat, true, setItems.cfgTimeFormat);
             break ;
           
+          case MENU_SLEEPTIME: // Sleep Time
+            HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], false, true, setItems.cfgSleepTime);
+            break;
+
+          case MENU_WAKETIME: // Wake Time
+            HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], false, true, setItems.cfgWakeTime);
+            break;
+
           case MENU_BRIGHTNESS: // Brightness
             HandleBrightness(frame, true, setItems.cfgBrightness);
             break ;
@@ -363,7 +365,7 @@ bool doSetup(bool isInit)
     {
       case MENU_SETTIME: // Set Time
       {
-        int menuRet = HandleSetTime(frame, (millis()/500)%2, false, DateTime);
+        int menuRet = HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], (millis()/500)%2, false, DateTime);
         if( menuRet != 0)
         {
           if(menuRet == 1)
@@ -407,6 +409,36 @@ bool doSetup(bool isInit)
         break ;        
       }
         
+      case MENU_SLEEPTIME: // Sleep Time
+      {
+        int menuRet = HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], (millis()/500)%2, false, setItems.cfgSleepTime);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            config.SetCfgItems(setItems);
+          }
+          
+          showMainMenu = true;
+        }
+        break;
+      }
+
+      case MENU_WAKETIME: // Wake Time
+      {
+        int menuRet = HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], (millis()/500)%2, false, setItems.cfgWakeTime);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            config.SetCfgItems(setItems);
+          }
+          
+          showMainMenu = true;
+        }
+        break;
+      }
+
       case MENU_BRIGHTNESS: // Brightness
         if(!HandleBrightness(frame, false, setItems.cfgBrightness))
         {
@@ -724,7 +756,7 @@ static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
 //------------------------
 // Function: HandleSetTime
 //------------------------
-static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initValue)
+static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isInit, time_t& initValue)
 {
   static TimeElements value ;
   static int position ;
@@ -801,7 +833,7 @@ static int HandleSetTime(DmdFrame& frame, bool tick, bool isInit, time_t& initVa
   }
 
   // Title
-  PaintTitle(frame, "SET TIME");
+  PaintTitle(frame, title);
 
   // Clock
   blankingPos0 = tick ? "-     -" : "      -";

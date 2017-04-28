@@ -1,10 +1,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#include "Config.h"
-
-// One and only instance
-Config config;
+#include "Globals.h"
 
 //----------------------
 // Function: Constructor
@@ -26,6 +23,9 @@ Config::Config()
     cfgItems.cfgDmdType = 0;
     cfgItems.cfgShowBrand = CFG_SB_NEVER;
     cfgItems.cfgDebug = CFG_DBG_NO;
+    cfgItems.cfgBtnReverse = CFG_BM_NORMAL;
+    cfgItems.cfgSleepTime = 0;
+    cfgItems.cfgWakeTime = 0;
 
     writeEeprom();
   }

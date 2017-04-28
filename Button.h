@@ -23,6 +23,7 @@ class Button
     
   public:
     Button(int pinBtn);
+    void SetPin(int pintBtn);
     int Read();
     int ReadRaw();
 };

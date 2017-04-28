@@ -1,8 +1,30 @@
 #include <Arduino.h>
 #include <Time.h>
 
+#include "Globals.h"
+
 #include "Utils.h"
-#include "Config.h"
+
+//------------------------
+// Function: SetBtnMapping
+//------------------------
+void SetBtnMapping(bool reverse)
+{
+  if(reverse)
+  {
+    btnMenu.SetPin(pinBtnEnter);
+    btnPlus.SetPin(pinBtnMinus);
+    btnMinus.SetPin(pinBtnPlus);
+    btnEnter.SetPin(pinBtnMenu);
+  }
+  else
+  {
+    btnMenu.SetPin(pinBtnMenu);
+    btnPlus.SetPin(pinBtnPlus);
+    btnMinus.SetPin(pinBtnMinus);
+    btnEnter.SetPin(pinBtnEnter);
+  }
+}
 
 //-----------------
 // Function: nowDST
@@ -17,6 +39,25 @@ time_t NowDST()
   }
 
   return timeNow;
+}
+
+//---------------------
+// Function: CpuRestart
+//---------------------
+void CpuRestart()
+{
+  uint32_t *addrRestart = (uint32_t *)0xE000ED0C;
+
+  // Force restart of CPU
+  *addrRestart = 0x5FA0004;
+}
+
+//-------------------------
+// Function: getTeensy3Time
+//-------------------------
+time_t getTeensy3Time()
+{
+  return Teensy3Clock.get();
 }
 
 //------------------

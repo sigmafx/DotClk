@@ -3,9 +3,11 @@
 
 extern "C" {
 
+  void SetBtnMapping(bool reverse);
   time_t NowDST();
+  void CpuRestart();
+  time_t getTeensy3Time();
   uint32_t FreeRam();
-  
 }
 
 #endif

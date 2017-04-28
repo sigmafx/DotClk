@@ -4,12 +4,11 @@
 #include <TimeLib.h>
 
 // Local Includes
-#include "Dmd.h"
+#include "Globals.h"
+
 #include "Font.h"
-#include "Button.h"
 #include "Scene.h"
 #include "Setup.h"
-#include "Config.h"
 #include "Utils.h"
 #include "Version.h"
 
@@ -22,6 +21,7 @@ enum MODE {
   modeSetup = 1,
   modeClock = 2,
   modeOff = 3,
+  modeSleep = 4,
 };
 
 typedef char FILENAME[8+1+3+1];
@@ -39,24 +39,12 @@ const int pinLD = 4 ;
 const int pinLT = 1 ;
 const int pinSK = 0 ;
 const int pinLED = 13;
-const int pinBtnPlus = 28;
-const int pinBtnMinus = 29;
-const int pinBtnEnter = 27;
-const int pinBtnMenu = 30;
 const int pinGND[] = { 16, 17, 18, 22, 23 } ;
 
 // Fonts
 Font fontStandard;
-Font fontSystem;
-Font fontMenu;
 Font *fontUser = NULL;
 Font *fontClock;
-
-// Buttons
-Button btnMenu(pinBtnMenu);
-Button btnPlus(pinBtnPlus);
-Button btnMinus(pinBtnMinus);
-Button btnEnter(pinBtnEnter);
 
 // Scene files list
 FILENAME *sceneNames = NULL;
@@ -83,6 +71,9 @@ void setup()
   
   // Initialise the LED pin as an output.
   pinMode(pinLED, OUTPUT);
+
+  // Set button mapping from config value
+  SetBtnMapping(false);
 
   // Detect button presses for configuring the DMD type
   InitDmdType();
@@ -133,8 +124,18 @@ void setup()
 //---------------
 void loop()
 {
-  static int mode = modeClock ;
+  static int mode = modeClock;
+  static bool forceWake = false;
+  
+  time_t tNow = NowDST();
+  time_t tWake = config.GetCfgItems().cfgWakeTime;
 
+  // Reset the forceWake
+  if(hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake))
+  {
+    forceWake = false;
+  }
+    
   switch(mode)
   {
     case modeClock:
@@ -153,8 +154,21 @@ void loop()
       }
       else
       {
-        // Clock mode
-        doClock();
+        time_t tSleep = config.GetCfgItems().cfgSleepTime;
+        
+        if(!forceWake &&  // Haven't been forcibly woken
+            hour(tWake) != hour(tSleep) && minute(tWake) != minute(tSleep) && // Wake and Sleep times aren't the same
+            hour(tNow) == hour(tSleep) && minute(tNow) == minute(tSleep)) // Time to sleep
+        {
+          // From Clock mode to Sleep mode
+          mode = modeSleep;
+          dmd.Stop();
+        }
+        else
+        {
+          // Clock mode
+          doClock();
+        }
       }
       break;
 
@@ -179,6 +193,30 @@ void loop()
         dmd.Start();
       }
       break ;
+
+    case modeSleep:
+    {
+      time_t tNow = NowDST();
+      time_t tWake = config.GetCfgItems().cfgWakeTime;
+        
+      if(btnMenu.Read() == Button::Rising ||
+          btnPlus.Read() == Button::Rising ||
+          btnMinus.Read() == Button::Rising ||
+          btnEnter.Read() == Button::Rising)
+      {
+        // Any button forces wake up
+        forceWake = true;
+      }
+      
+      if(forceWake || (hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake)))
+      {
+        // From Sleep mode to Clock mode
+        mode = modeClock;
+        dmd.Start();
+      }
+      
+      break;
+    }
 
     default:
       // Default position is to Clock mode
@@ -740,24 +778,5 @@ void InitDmdType()
     btnMinus.ReadRaw() == Button::On ||
     btnPlus.ReadRaw() == Button::On ||
     btnEnter.ReadRaw() == Button::On) ;
-}
-
-//---------------------
-// Function: CpuRestart
-//---------------------
-void CpuRestart()
-{
-  uint32_t *addrRestart = (uint32_t *)0xE000ED0C;
-
-  // Force restart of CPU
-  *addrRestart = 0x5FA0004;
-}
-
-//-------------------------
-// Function: getTeensy3Time
-//-------------------------
-time_t getTeensy3Time()
-{
-  return Teensy3Clock.get();
 }
 

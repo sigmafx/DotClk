@@ -14,6 +14,10 @@ typedef struct tagConfigItems
     int cfgDmdType;
     int cfgShowBrand;
     int cfgDebug;
+    int cfgBtnReverse;
+    time_t cfgSleepTime;
+    time_t cfgWakeTime;
+
 } ConfigItems;
 
 class Config
@@ -29,7 +33,7 @@ class Config
     int writeBytes(int address, byte *data, size_t  len);
 
   public:
-    static const int CntItems = 9;
+    static const int CntItems = 12;
 
   // DST
   enum {
@@ -75,12 +79,16 @@ class Config
     CFG_DBG_YES
   } ;
 
+  // BUTTON MAPPING
+  enum {
+    CFG_BM_NORMAL = 0,
+    CFG_BM_REVERSE
+  } ;
+
   public:
     Config();
     const ConfigItems& GetCfgItems();
     bool SetCfgItems(ConfigItems& cfgItems, bool write = true);
 };
-
-extern Config config;
 
 #endif

@@ -54,7 +54,5 @@ class Dmd
     
 };
 
-extern Dmd dmd ;
-
 #endif
 

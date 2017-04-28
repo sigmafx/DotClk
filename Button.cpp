@@ -4,16 +4,22 @@
 
 Button::Button(int pinBtn)
 {
-  // Set the button pint to input pull up
-  // Button is expected to be grounded to be ON
-  pinMode(pinBtn, INPUT_PULLUP);
-
-  // Initialise member variables
-  this->pinBtn = pinBtn ;
+  SetPin(pinBtn);
+  
   timeDebounce = 100;
   timeHold = 1000;
   risen = false;
   readLast = HIGH ;
+}
+
+void Button::SetPin(int pinBtn)
+{
+  // Set the button pint to input pull up
+  // Button is expected to be grounded to be ON
+  pinMode(pinBtn, INPUT_PULLUP);
+
+  // Store the button pin assignment
+  this->pinBtn = pinBtn ;
 }
 
 int Button::ReadRaw()

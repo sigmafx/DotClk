@@ -1,15 +1,12 @@
 #include <Arduino.h>
 
-#include "Dmd.h"
+#include "Globals.h"
 
 // Funtion Prototypes
 extern "C"
 {
 static void isrDmd();
 }
-
-// One and only instance
-Dmd dmd;
 
 //----------------------
 // Function: Constructor
