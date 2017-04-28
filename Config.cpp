@@ -23,7 +23,7 @@ Config::Config()
     cfgItems.cfgDmdType = 0;
     cfgItems.cfgShowBrand = CFG_SB_NEVER;
     cfgItems.cfgDebug = CFG_DBG_NO;
-    cfgItems.cfgBtnReverse = CFG_BM_NORMAL;
+    cfgItems.cfgBtnMap = CFG_BM_NORMAL;
     cfgItems.cfgSleepTime = 0;
     cfgItems.cfgWakeTime = 0;
 

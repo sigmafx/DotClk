@@ -14,7 +14,7 @@ typedef struct tagConfigItems
     int cfgDmdType;
     int cfgShowBrand;
     int cfgDebug;
-    int cfgBtnReverse;
+    int cfgBtnMap;
     time_t cfgSleepTime;
     time_t cfgWakeTime;
 

@@ -73,7 +73,7 @@ void setup()
   pinMode(pinLED, OUTPUT);
 
   // Set button mapping from config value
-  SetBtnMapping(false);
+  SetBtnMapping(config.GetCfgItems().cfgBtnMap);
 
   // Detect button presses for configuring the DMD type
   InitDmdType();

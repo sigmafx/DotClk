@@ -44,6 +44,7 @@ enum
   MENU_CLOCKDELAY,
   MENU_CLOCKFONT,
   MENU_DOTCOLOUR,
+  MENU_BTNMAP,
   MENU_SHOWBRAND,
   MENU_DEBUG,
 };
@@ -51,7 +52,7 @@ enum
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(11)
+  MenuMainMenu() : Menu(12)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
@@ -63,8 +64,9 @@ struct MenuMainMenu : Menu
     menuItems[6] = "CLOCK DELAY";
     menuItems[7] = "CLOCK FONT";
     menuItems[8] = "DOT COLOUR";
-    menuItems[9] = "SHOW BRAND";
-    menuItems[10] = "DEBUG";
+    menuItems[9] = "BUTTON MAPPING";
+    menuItems[10] = "SHOW BRAND";
+    menuItems[11] = "DEBUG";
     menuButtons[0] = "Exit";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -139,6 +141,20 @@ struct MenuDotColour : Menu
   }
 };
 
+struct MenuBtnMap : Menu
+{
+  MenuBtnMap() : Menu(2) 
+  {
+    menuTitle = "BUTTON MAPPING";
+    menuItems[0] = "NORMAL";
+    menuItems[1] = "REVERSE";
+    menuButtons[0] = "Back";
+    menuButtons[1] = "Prev";
+    menuButtons[2] = "Next";
+    menuButtons[3] = "Save";
+  }
+};
+
 struct MenuShowBrand : Menu
 {
   MenuShowBrand() : Menu(5) 
@@ -172,13 +188,14 @@ struct MenuDebug : Menu
 
 // Standard menu objects
 MenuMainMenu menuMainMenu;
-MenuDST menuDST;
-MenuTimeFormat menuTimeFormat;
-MenuClockDelay menuClockDelay;
-MenuDotColour menuDotColour;
-Menu *menuClockFont = NULL;
-MenuShowBrand menuShowBrand;
-MenuDebug menuDebug;
+  MenuDST menuDST;
+  MenuTimeFormat menuTimeFormat;
+  MenuClockDelay menuClockDelay;
+  Menu *menuClockFont = NULL;
+  MenuDotColour menuDotColour;
+  MenuBtnMap menuBtnMap;
+  MenuShowBrand menuShowBrand;
+  MenuDebug menuDebug;
 
 FONTNAME *fontUserNames = NULL;
 
@@ -344,6 +361,10 @@ bool doSetup(bool isInit)
             HandleStandard(frame, menuDotColour, true, setItems.cfgDotColour);
             break ;
 
+          case MENU_BTNMAP: // Button Mapping
+            HandleStandard(frame, menuBtnMap, true, setItems.cfgBtnMap);
+            break ;
+
           case MENU_SHOWBRAND: // Show Brand
             HandleStandard(frame, menuShowBrand, true, setItems.cfgShowBrand);
             break ;
@@ -496,6 +517,21 @@ bool doSetup(bool isInit)
         break;
       }
       
+      case MENU_BTNMAP: // Button Mapping
+      {
+        int menuRet = HandleStandard(frame, menuBtnMap, false, setItems.cfgBtnMap);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            SetBtnMapping(setItems.cfgBtnMap);
+            config.SetCfgItems(setItems);
+          }          
+          showMainMenu = true;
+        }
+        break;
+      }
+
       case MENU_SHOWBRAND: // Show Brand
       {
         int menuRet = HandleStandard(frame, menuShowBrand, false, setItems.cfgShowBrand);
