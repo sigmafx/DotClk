@@ -18,10 +18,6 @@
 #include "./Fonts/System.h"
 #include "./Fonts/Menu.h"
 
-#define CPU_RESTART_ADDR (uint32_t *)0xE000ED0C
-#define CPU_RESTART_VAL 0x5FA0004
-#define CPU_RESTART (*CPU_RESTART_ADDR = CPU_RESTART_VAL);
-
 enum MODE {
   modeSetup = 1,
   modeClock = 2,
@@ -232,7 +228,7 @@ void doClock()
     if(InitSD())
     {
       // SD Card now available - reboot
-      CPU_RESTART;
+      CpuRestart();
     }
   }
 
@@ -744,6 +740,17 @@ void InitDmdType()
     btnMinus.ReadRaw() == Button::On ||
     btnPlus.ReadRaw() == Button::On ||
     btnEnter.ReadRaw() == Button::On) ;
+}
+
+//---------------------
+// Function: CpuRestart
+//---------------------
+void CpuRestart()
+{
+  uint32_t *addrRestart = (uint32_t *)0xE000ED0C;
+
+  // Force restart of CPU
+  *addrRestart = 0x5FA0004;
 }
 
 //-------------------------
