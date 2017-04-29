@@ -27,4 +27,7 @@ extern Button btnEnter;
 extern Font fontMenu;
 extern Font fontSystem;
 
+// Force Wake flag
+extern bool forceWake;
+
 #endif

@@ -438,6 +438,7 @@ bool doSetup(bool isInit)
           if(menuRet == 1)
           {
             config.SetCfgItems(setItems);
+            forceWake = false;
           }
           
           showMainMenu = true;
@@ -453,6 +454,7 @@ bool doSetup(bool isInit)
           if(menuRet == 1)
           {
             config.SetCfgItems(setItems);
+            forceWake = false;
           }
           
           showMainMenu = true;

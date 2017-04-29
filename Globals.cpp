@@ -18,3 +18,6 @@ Button btnEnter(pinBtnEnter);
 Font fontSystem;
 Font fontMenu;
 
+// Force Wake flag
+bool forceWake = false;
+

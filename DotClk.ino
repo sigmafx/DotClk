@@ -60,7 +60,7 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  //while(!Serial);
+  while(!Serial);
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
@@ -125,14 +125,14 @@ void setup()
 void loop()
 {
   static int mode = modeClock;
-  static bool forceWake = false;
   
   time_t tNow = NowDST();
   time_t tWake = config.GetCfgItems().cfgWakeTime;
 
   // Reset the forceWake
-  if(hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake))
+  if(forceWake && hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake))
   {
+Serial.println("Reset forceWake");
     forceWake = false;
   }
     
@@ -157,9 +157,10 @@ void loop()
         time_t tSleep = config.GetCfgItems().cfgSleepTime;
         
         if(!forceWake &&  // Haven't been forcibly woken
-            hour(tWake) != hour(tSleep) && minute(tWake) != minute(tSleep) && // Wake and Sleep times aren't the same
-            hour(tNow) == hour(tSleep) && minute(tNow) == minute(tSleep)) // Time to sleep
+            !(hour(tWake) == hour(tSleep) && minute(tWake) == minute(tSleep)) && // Wake and Sleep times aren't the same
+            (hour(tNow) == hour(tSleep) && minute(tNow) == minute(tSleep))) // Time to sleep
         {
+Serial.println("Sleep");
           // From Clock mode to Sleep mode
           mode = modeSleep;
           dmd.Stop();
@@ -210,6 +211,7 @@ void loop()
       
       if(forceWake || (hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake)))
       {
+Serial.println("Wake");
         // From Sleep mode to Clock mode
         mode = modeClock;
         dmd.Start();
