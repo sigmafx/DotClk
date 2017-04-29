@@ -95,18 +95,10 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
   int widthString;
   int destXOffset;
   int destXOffsetRetainMask;
-  int thisChar;
   
   // Determine total width of the returned dotmap from the chars being requested
-  widthString = 0;
-  for (thisChar = 0; thisChar < (int)(strlen(string) - 1); thisChar++)
-  {
-    widthString += GetCharWidth(string[thisChar]);
-    widthString -= GetCharKerning(string[thisChar]);
-  }
-
-  widthString += GetCharWidth(string[thisChar]);
-
+  widthString = GetStringWidth(string);
+  
   // Create the dotmap
   dmp.Create(widthString, dmpFont.GetHeight());
 
@@ -154,6 +146,23 @@ Dotmap& Font::DmpFromString(Dotmap& dmp, const char *string, const char *blankin
   }
   
   return dmp;
+}
+
+int Font::GetStringWidth(const char *string)
+{
+  int ret ;
+  int thisChar;
+    
+  ret = 0;
+  for (thisChar = 0; thisChar < (int)(strlen(string) - 1); thisChar++)
+  {
+    ret += GetCharWidth(string[thisChar]);
+    ret -= GetCharKerning(string[thisChar]);
+  }
+
+  ret += GetCharWidth(string[thisChar]);
+
+  return ret;
 }
 
 byte Font::GetFontCount()

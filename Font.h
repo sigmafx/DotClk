@@ -35,6 +35,7 @@ class Font
     bool SetCharInfoFromRaw(const byte *data, uint16_t len);
     bool SetCharInfo(int idx, char ascii, uint16_t width, uint16_t kerning);
     Dotmap& DmpFromString(Dotmap& dmp, const char *string, const char *blanking = NULL);
+    int GetStringWidth(const char *string);
 
   public:
     static byte GetFontName(File& fileFont, FONTNAME fontName);
