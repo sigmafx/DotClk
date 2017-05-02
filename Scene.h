@@ -18,6 +18,8 @@ class Scene
     uint16_t cntFrames;
     uint16_t curFrame;
     byte clockStyle;
+    byte customX;
+    byte customY;
     short doFirst;
     short doLast;
     Dotmap dmpFrame;
@@ -30,6 +32,7 @@ class Scene
       ClockStyle3,
       ClockStyle4,
       ClockStyle5,
+      ClockStyle6,
     };
     
   public:
@@ -43,6 +46,8 @@ class Scene
     unsigned long GetFrameDelay();
     uint16_t GetFrameLayer();
     byte GetClockStyle();
+    byte GetCustomX();
+    byte GetCustomY();
 };
 
 #endif

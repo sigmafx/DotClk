@@ -62,9 +62,11 @@ bool Scene::Create(File& fileScene)
   
       // Clock Style
       ret &= fileScene.read(&clockStyle, sizeof(clockStyle)) > -1;
+      ret &= fileScene.read(&customX, sizeof(customX)) > -1;
+      ret &= fileScene.read(&customY, sizeof(customY)) > -1;
   
-      // Skip the 19 bytes for future features
-      byte space[19] ;
+      // Skip the 17 bytes for future features
+      byte space[17] ;
       ret &= fileScene.read(space, sizeof(space)) > -1;
     }
   }
@@ -193,5 +195,15 @@ uint16_t Scene::GetFrameLayer()
 byte Scene::GetClockStyle()
 {
   return clockStyle;
+}
+
+byte Scene::GetCustomX()
+{
+  return customX;
+}
+
+byte Scene::GetCustomY()
+{
+  return customY;
 }
 

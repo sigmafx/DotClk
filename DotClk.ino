@@ -60,7 +60,7 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  while(!Serial);
+  //while(!Serial);
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
@@ -132,7 +132,6 @@ void loop()
   // Reset the forceWake
   if(forceWake && hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake))
   {
-Serial.println("Reset forceWake");
     forceWake = false;
   }
     
@@ -160,7 +159,6 @@ Serial.println("Reset forceWake");
             !(hour(tWake) == hour(tSleep) && minute(tWake) == minute(tSleep)) && // Wake and Sleep times aren't the same
             (hour(tNow) == hour(tSleep) && minute(tNow) == minute(tSleep))) // Time to sleep
         {
-Serial.println("Sleep");
           // From Clock mode to Sleep mode
           mode = modeSleep;
           dmd.Stop();
@@ -211,7 +209,6 @@ Serial.println("Sleep");
       
       if(forceWake || (hour(tNow) == hour(tWake) && minute(tNow) == minute(tWake)))
       {
-Serial.println("Wake");
         // From Sleep mode to Clock mode
         mode = modeClock;
         dmd.Start();
@@ -225,9 +222,6 @@ Serial.println("Wake");
       mode = modeClock;
       break;
   }
-
-  // Keep millis running
-  delay(10);
 }
 
 //------------------
@@ -437,6 +431,7 @@ void doClock()
       {
         int xClock, yClock;
 
+
         // Generate clock dotmap
         switch(scene.GetClockStyle())
         {
@@ -445,42 +440,52 @@ void doClock()
             // Generate clock dotmap
             fontClock->DmpFromString(dmpClock, clock, blanking);
             xClock = (127 - dmpClock.GetWidth()) / 2;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
             break;
 
           case Scene::ClockStyle1:
             clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = (42 - dmpClock.GetWidth()) / 2;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
             break;
 
           case Scene::ClockStyle2:
             clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = ((42 - dmpClock.GetWidth()) / 2) + 43;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
             break;
 
           case Scene::ClockStyle3:
             clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
             break;
 
         case Scene::ClockStyle4:
             clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = (64 - dmpClock.GetWidth()) / 2;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
             break;
 
           case Scene::ClockStyle5:
             clock[5] = '\0'; // Remove am/pm
             fontMenu.DmpFromString(dmpClock, clock, blanking);
             xClock = ((64 - dmpClock.GetWidth()) / 2) + 64;
+            yClock = (31 - dmpClock.GetHeight()) / 2;
+            break;
+
+        case Scene::ClockStyle6:
+            clock[5] = '\0'; // Remove am/pm
+            fontMenu.DmpFromString(dmpClock, clock, blanking);
+            xClock = scene.GetCustomX() - (dmpClock.GetWidth() / 2);
+            yClock = scene.GetCustomY();
             break;
         }
         
-        // Determine y position of clock
-        yClock = (31 - dmpClock.GetHeight()) / 2;
-
         // Get the frame dotmap
         dmpFrame = scene.GetFrameDotmap();
 

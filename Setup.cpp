@@ -9,8 +9,6 @@
 #include "Dotmap.h"
 #include "Utils.h"
 
-// Menu Helper
-struct Menu;
 typedef void (*FEEDBACK)(int value);
 
 struct Menu
