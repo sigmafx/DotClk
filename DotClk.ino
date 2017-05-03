@@ -60,7 +60,7 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  while(!Serial);
+  //while(!Serial);
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
