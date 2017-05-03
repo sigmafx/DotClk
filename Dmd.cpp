@@ -230,59 +230,87 @@ void Dmd::SetDmdType(int dmdType)
 //--------------------
 int Dmd::UpdateRow()
 {
-  int col;
-  int colBit ;
   int ret ;
-  byte colourbits = colour + 1;
+  int col;
   byte *rowTop, *rowBottom ;
-  byte mask;
+  byte maskBit, maskR, maskG;
 
   rowTop = bufferInUse->dots[row];
   rowBottom = bufferInUse->dots[row + 16];
-  mask = 0x11 << frame;
+
+  maskBit = 1 << frame;
+  maskR = (colour + 1) & 0x01 ? 0xFF : 0x00;
+  maskG = (colour + 1) & 0x02 ? 0xFF : 0x00;
   
   // Process each column, 2 at a time
+  // Code has been flattened out to improve performance
   for(col = 0; col < 64; col++)
   {
+    byte  data1,
+          data2;
+
     // Disable the display at the appropriate column, thereby setting the brightness
     if(col ==  brightness)
-      digitalWriteFast(pinEN, HIGH);
-  
-    for(colBit = 0; colBit < 2; colBit++)
     {
-      byte  data1,
-            data2;
-
-      // Extract the 2 data rows
-      data1 = *rowTop & mask;
-      data1 = colBit & 1 ? (data1 >> 4) : (data1 & 0x0F);
-
-      data2 = *rowBottom & mask;
-      data2 = colBit & 1 ? ( data2 >> 4) : (data2 & 0x0F);
-
-      if(dmdType == 1)
-      {
-        data1 = !data1;
-        data2 = !data2;
-      }
-
-      // Clock LOW
-      digitalWriteFast(pinSK, LOW);
-
-      // Set data
-      // Red
-      digitalWriteFast(pinR1, colourbits & 0x01 ? data1 : 0);
-      digitalWriteFast(pinR2, colourbits & 0x01 ? data2 : 0);
-      // Green
-      digitalWriteFast(pinG1, (colourbits & 0x02) ? data1 : 0);
-      digitalWriteFast(pinG2, (colourbits & 0x02) ? data2 : 0);
-      // Blue
-      //digitalWriteFast(pinB1, (colourbits & 0x04) ? data1 : 0);
-      //digitalWriteFast(pinB2, (colourbits & 0x04) ? data2 : 0);
-
-      // Clock HIGH
-      digitalWriteFast(pinSK, HIGH);
+      digitalWriteFast(pinEN, HIGH);
     }
+
+    // Extract the 2 data rows
+    data1 = *rowTop & maskBit;
+    data2 = *rowBottom & maskBit;
+
+    if(dmdType == 1)
+    {
+      data1 = !data1;
+      data2 = !data2;
+    }
+    
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
+
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    //digitalWriteFast(pinB1, data1 & maskB);
+    //digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
+
+    // Extract the next 2 data rows
+    data1 = *rowTop >> 4;
+    data1 &= maskBit;
+
+    data2 = *rowBottom >> 4;
+    data2 &= maskBit;
+
+    if(dmdType == 1)
+    {
+      data1 = !data1;
+      data2 = !data2;
+    }
+
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
+
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    //digitalWriteFast(pinB1, data1 & maskB);
+    //digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
 
     rowTop++;
     rowBottom++;

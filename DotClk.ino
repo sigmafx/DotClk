@@ -60,7 +60,7 @@ void setup()
 
   // Serial debug
   Serial.begin(9600);
-  //while(!Serial);
+  while(!Serial);
 
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
@@ -222,6 +222,9 @@ void loop()
       mode = modeClock;
       break;
   }
+
+  // Keep the millis rolling
+  delay(10);
 }
 
 //------------------
@@ -234,7 +237,7 @@ void doClock()
   static unsigned long millisSceneStart = millis();
   static unsigned long millisSceneFrameDelay = 0;
   static uint16_t curScene = 0;
-  
+
   DmdFrame frame;
   Dotmap dmpFrame ;
   Dotmap dmpClock;
@@ -352,7 +355,7 @@ void doClock()
       break;
   }
   
-  int cfgClockDelay;
+  uint32_t cfgClockDelay;
   switch(cfgItems.cfgClockDelay)
   {
     default:
@@ -379,7 +382,7 @@ void doClock()
       break;
   }
 
-  if(cntScenes == 0 || millisNow - millisSceneStart < (uint16_t)cfgClockDelay)
+  if(cntScenes == 0 || millisNow - millisSceneStart < cfgClockDelay)
   {
     // Generate clock dotmap
     fontClock->DmpFromString(dmpClock, clock, blanking);
@@ -398,14 +401,24 @@ void doClock()
     if(fileScene)
     {
       // Get the next scene frame?
-      if(millisSceneFrameDelay == 0 || (millisNow - millisSceneFrameDelay) > scene.GetFrameDelay())
+      if(millisNow - millisSceneFrameDelay > scene.GetFrameDelay())
       {
         // At the end of the scene?
         if(!scene.Eof())
         {
+          if(millisSceneFrameDelay == 0)
+          {
+            // First frame, start timing from now
+            millisSceneFrameDelay = millisNow;
+          }
+          else
+          {
+            // Add on the frame delay so  that we keep a good track of time
+            millisSceneFrameDelay += scene.GetFrameDelay();
+          }
+
           // First frame or next frame
           scene.NextFrame(fileScene);
-          millisSceneFrameDelay = millisNow;
         }
         else
         {
@@ -516,8 +529,9 @@ void doClock()
       }
       else
       {
-          // Finished the scene, show the clock again
-          millisSceneStart = millisNow;        
+        // Finished the scene, show the clock again
+        millisSceneStart = millisNow;
+        millisSceneFrameDelay = 0;
       }
     }
     else
