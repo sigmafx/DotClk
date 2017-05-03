@@ -231,8 +231,7 @@ void doClock()
 {
   static File fileScene ;
   static Scene scene;
-  static unsigned long millisClockBeat = 0;
-  static unsigned long millisSceneStart = 0;
+  static unsigned long millisSceneStart = millis();
   static unsigned long millisSceneFrameDelay = 0;
   static uint16_t curScene = 0;
   
@@ -243,19 +242,8 @@ void doClock()
   const char *blanking;
   char clock[15 + 1];
   time_t timeNow = NowDST();
-
-  // Initialise the clock
-  if(millisClockBeat == 0)
-  {
-    millisClockBeat = millisNow;
-  }
-
-  // Initialise the scene start
-  if(millisSceneStart == 0)
-  {
-    millisSceneStart = millisNow;
-  }
-
+  ConfigItems cfgItems = config.GetCfgItems();
+  
   if(cntScenes == 0)
   {
     // Scenes dir not open, try to init the SD Card
@@ -273,7 +261,7 @@ void doClock()
     uint16_t divider ;
 
     // Determine when and if the Brand scene should be shown
-    switch(config.GetCfgItems().cfgShowBrand)
+    switch(cfgItems.cfgShowBrand)
     {
       default:
       case Config::CFG_SB_NEVER:
@@ -348,7 +336,7 @@ void doClock()
   }
 
   // Create the clock dotmap  
-  switch(config.GetCfgItems().cfgTimeFormat)
+  switch(cfgItems.cfgTimeFormat)
   {
     default:
     case Config::CFG_TF_24HOUR:
@@ -365,7 +353,7 @@ void doClock()
   }
   
   int cfgClockDelay;
-  switch(config.GetCfgItems().cfgClockDelay)
+  switch(cfgItems.cfgClockDelay)
   {
     default:
     case Config::CFG_CD_5SECS:
@@ -430,7 +418,6 @@ void doClock()
       if(fileScene)
       {
         int xClock, yClock;
-
 
         // Generate clock dotmap
         switch(scene.GetClockStyle())
@@ -504,7 +491,7 @@ void doClock()
         }
 
         // If debug on, display the scene file name in the top left
-        if(config.GetCfgItems().cfgDebug != 0)
+        if(cfgItems.cfgDebug != 0)
         {
           Dotmap dmpFilename ;
           FILENAME sceneName ;

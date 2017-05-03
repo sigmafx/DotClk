@@ -233,28 +233,32 @@ int Dmd::UpdateRow()
   int col;
   int colBit ;
   int ret ;
+  byte colourbits = colour + 1;
+  byte *rowTop, *rowBottom ;
+  byte mask;
+
+  rowTop = bufferInUse->dots[row];
+  rowBottom = bufferInUse->dots[row + 16];
+  mask = 0x11 << frame;
   
   // Process each column, 2 at a time
   for(col = 0; col < 64; col++)
   {
     // Disable the display at the appropriate column, thereby setting the brightness
-    if(col >=  brightness)
+    if(col ==  brightness)
       digitalWriteFast(pinEN, HIGH);
   
     for(colBit = 0; colBit < 2; colBit++)
     {
       byte  data1,
             data2;
-      byte colourbits = colour + 1;
 
       // Extract the 2 data rows
-      data1 = bufferInUse->dots[row][col];
+      data1 = *rowTop & mask;
       data1 = colBit & 1 ? (data1 >> 4) : (data1 & 0x0F);
-      data1 &= (1 << frame);
 
-      data2 = bufferInUse->dots[row + 16][col];
+      data2 = *rowBottom & mask;
       data2 = colBit & 1 ? ( data2 >> 4) : (data2 & 0x0F);
-      data2 &= (1 << frame);
 
       if(dmdType == 1)
       {
@@ -279,6 +283,9 @@ int Dmd::UpdateRow()
       // Clock HIGH
       digitalWriteFast(pinSK, HIGH);
     }
+
+    rowTop++;
+    rowBottom++;
   }
 
   // Data latch LOW
