@@ -27,17 +27,17 @@ enum MODE {
 typedef char FILENAME[8+1+3+1];
 
 // Pin Assignments
-const int pinEN = 19 ;
-const int pinR1 = 20 ;
-const int pinR2 = 21 ;
-const int pinG1 = 3 ;
-const int pinG2 = 2 ;
-const int pinLA = 7 ;
-const int pinLB = 6 ;
-const int pinLC = 5 ;
-const int pinLD = 4 ;
-const int pinLT = 1 ;
-const int pinSK = 0 ;
+const int pinEN = 19 ; // B2
+const int pinR1 = 20 ; // D5
+const int pinR2 = 21 ; // D6
+const int pinG1 = 3 ;  // A12
+const int pinG2 = 2 ;  // D0
+const int pinLA = 7 ;  // D2
+const int pinLB = 6 ;  // D4
+const int pinLC = 5 ;  // D7
+const int pinLD = 4 ;  // A13
+const int pinLT = 1 ;  // B17
+const int pinSK = 0 ;  // B16
 const int pinLED = 13;
 const int pinGND[] = { 16, 17, 18, 22, 23 } ;
 
@@ -237,7 +237,8 @@ void doClock()
   static unsigned long millisSceneStart = millis();
   static unsigned long millisSceneFrameDelay = 0;
   static uint16_t curScene = 0;
-
+  static unsigned long sceneStart = 0, sceneDuration = 0;
+  
   DmdFrame frame;
   Dotmap dmpFrame ;
   Dotmap dmpClock;
@@ -391,6 +392,17 @@ void doClock()
     frame.Clear();
     frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), (127 - dmpClock.GetWidth()) / 2, (31 - dmpClock.GetHeight())/2);
 
+    if(cfgItems.cfgDebug != 0)
+    {
+      char textDurn[63 + 1];
+      Dotmap dmpDuration ;
+      
+      sprintf(textDurn, "%lu", sceneDuration);
+      fontSystem.DmpFromString(dmpDuration, textDurn);
+      dmpDuration.ClearMask();
+      frame.DotBlt(dmpDuration, 0, 0, dmpDuration.GetWidth(), dmpDuration.GetHeight(), 0, 0);         
+    }
+    
     // Update the DMD
     dmd.WaitSync();
     dmd.SetFrame(frame);
@@ -403,6 +415,11 @@ void doClock()
       // Get the next scene frame?
       if(millisNow - millisSceneFrameDelay > scene.GetFrameDelay())
       {
+        if(sceneStart == 0)
+        {
+          sceneStart = millis();
+        }
+        
         // At the end of the scene?
         if(!scene.Eof())
         {
@@ -422,6 +439,9 @@ void doClock()
         }
         else
         {
+          sceneDuration = millis() - sceneStart;
+          sceneStart = 0;
+            
           // Finished the scene close it
           fileScene.close();
         }
@@ -671,6 +691,9 @@ void InitScenes()
         // End of directory
         break;
       }
+
+      // Sort the list of filenames alphabetically
+      qsort(sceneNames, cntScenes, sizeof(sceneNames[0]), (__compar_fn_t)strcmp);
     }
 
     // Close the directory

@@ -198,8 +198,15 @@ void Dmd::IsrDmd()
   timerDmd.end();
 
   // Update a Dmd row
-  isrDelay = UpdateRow();
-
+  if(dmdType == 0)
+  {
+    isrDelay = UpdateRowType0();
+  }
+  else
+  {
+    isrDelay = UpdateRowType1();
+  }
+  
   // Set up next interrupt
   if(active)
   {
@@ -225,20 +232,21 @@ void Dmd::SetDmdType(int dmdType)
 // PRIVATE
 //--------
 //--------
-//--------------------
-// Function: UpdateRow
-//--------------------
-int Dmd::UpdateRow()
+//-------------------------
+// Function: UpdateRowType0
+//-------------------------
+int Dmd::UpdateRowType0()
 {
   int ret ;
   int col;
   byte *rowTop, *rowBottom ;
-  byte maskBit, maskR, maskG;
+  byte maskLowNibble, maskHighNibble, maskR, maskG;
 
   rowTop = bufferInUse->dots[row];
   rowBottom = bufferInUse->dots[row + 16];
 
-  maskBit = 1 << frame;
+  maskLowNibble = 0x01 << frame;
+  maskHighNibble = 0x10 << frame;
   maskR = (colour + 1) & 0x01 ? 0xFF : 0x00;
   maskG = (colour + 1) & 0x02 ? 0xFF : 0x00;
   
@@ -256,14 +264,8 @@ int Dmd::UpdateRow()
     }
 
     // Extract the 2 data rows
-    data1 = *rowTop & maskBit;
-    data2 = *rowBottom & maskBit;
-
-    if(dmdType == 1)
-    {
-      data1 = !data1;
-      data2 = !data2;
-    }
+    data1 = *rowTop & maskLowNibble;
+    data2 = *rowBottom & maskLowNibble;
     
     // Clock LOW
     digitalWriteFast(pinSK, LOW);
@@ -283,17 +285,149 @@ int Dmd::UpdateRow()
     digitalWriteFast(pinSK, HIGH);
 
     // Extract the next 2 data rows
-    data1 = *rowTop >> 4;
-    data1 &= maskBit;
+    data1 = *rowTop & maskHighNibble;
+    data2 = *rowBottom & maskHighNibble ;
 
-    data2 = *rowBottom >> 4;
-    data2 &= maskBit;
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
 
-    if(dmdType == 1)
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    //digitalWriteFast(pinB1, data1 & maskB);
+    //digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
+
+    rowTop++;
+    rowBottom++;
+  }
+
+  // Data latch LOW
+  digitalWriteFast(pinLT, HIGH);
+
+  // Set row address
+  digitalWriteFast(pinLA, row & 0b0001);
+  digitalWriteFast(pinLB, row & 0b0010);
+  digitalWriteFast(pinLC, row & 0b0100);
+  digitalWriteFast(pinLD, row & 0b1000);
+
+  // Data latch HIGH
+  digitalWriteFast(pinLT, LOW);
+
+  // Enable display
+  digitalWriteFast(pinEN, LOW);
+
+  // Return value is row pause to create the dot intensities
+  switch(frame)
+  {
+    default:
+    case 0:
+      ret = 1;
+      break ;
+
+    case 1:
+      ret = 2;
+      break ;
+
+    case 2:
+      ret = 30 ;
+      break ;
+
+    case 3:
+      ret = 45;
+      break ;
+  }
+
+  // Next row
+  row++;
+  if(row == 16)
+  {
+    // Finished a frame
+    row = 0;
+
+    // Next frame
+    frame++;
+    if(frame == 4)
     {
-      data1 = !data1;
-      data2 = !data2;
+      // Finished a full frame
+      frame = 0;
+
+      // Select the in-use buffer
+      bufferInUse = bufferActive;
     }
+  }
+
+  return ret;
+}
+
+//-------------------------
+// Function: UpdateRowType0
+//-------------------------
+int Dmd::UpdateRowType1()
+{
+  int ret ;
+  int col;
+  byte *rowTop, *rowBottom ;
+  byte maskLowNibble, maskHighNibble, maskR, maskG;
+
+  rowTop = bufferInUse->dots[row];
+  rowBottom = bufferInUse->dots[row + 16];
+
+  maskLowNibble = 0x01 << frame;
+  maskHighNibble = 0x10 << frame;
+  maskR = (colour + 1) & 0x01 ? 0xFF : 0x00;
+  maskG = (colour + 1) & 0x02 ? 0xFF : 0x00;
+  
+  // Process each column, 2 at a time
+  // Code has been flattened out to improve performance
+  for(col = 0; col < 64; col++)
+  {
+    byte  data1,
+          data2;
+
+    // Disable the display at the appropriate column, thereby setting the brightness
+    if(col ==  brightness)
+    {
+      digitalWriteFast(pinEN, HIGH);
+    }
+
+    // Extract the 2 data rows
+    data1 = *rowTop & maskLowNibble;
+    data2 = *rowBottom & maskLowNibble;
+
+    data1 = !data1;
+    data2 = !data2;
+    
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
+
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    //digitalWriteFast(pinB1, data1 & maskB);
+    //digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
+
+    // Extract the next 2 data rows
+    data1 = *rowTop & maskHighNibble;
+    data2 = *rowBottom & maskHighNibble ;
+
+    data1 = !data1;
+    data2 = !data2;
 
     // Clock LOW
     digitalWriteFast(pinSK, LOW);

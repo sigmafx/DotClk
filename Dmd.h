@@ -35,7 +35,8 @@ class Dmd
     int pinLT;
     int pinSK;
   
-    int UpdateRow();
+    int UpdateRowType0();
+    int UpdateRowType1();
 
   public:
     Dmd();

@@ -6,7 +6,7 @@ Button::Button(int pinBtn)
 {
   SetPin(pinBtn);
   
-  timeDebounce = 100;
+  timeDebounce = 10;
   timeHold = 1000;
   risen = false;
   readLast = HIGH ;
