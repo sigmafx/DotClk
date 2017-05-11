@@ -62,6 +62,9 @@ void setup()
   Serial.begin(9600);
   //while(!Serial);
 
+  // Randomize the generator
+  randomSeed(analogRead(32));
+
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
   {
@@ -292,7 +295,16 @@ void doClock()
     if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
     {
       // Open the next scene file
-      sprintf(pathScene, "/Scenes/%s", sceneNames[curScene % cntScenes]);
+      if(cfgItems.cfgDebug  == 0)
+      {
+        // Not debug, so play random scene
+        sprintf(pathScene, "/Scenes/%s", sceneNames[random(cntScenes)]);
+      }
+      else
+      {
+        // In debug mode, play in alphabetical order
+        sprintf(pathScene, "/Scenes/%s", sceneNames[curScene % cntScenes]);
+      }
     }
     else
     {
@@ -657,14 +669,12 @@ void InitScenes()
     // Loop on each scene file
     while(true)
     {
-      File fileScene;
+      FILENAME filename;
   
-      // Open the next scene file
-      fileScene = dirScenes.openNextFile();
-      if(fileScene)
+      if(dirScenes.getNextFilename(filename))
       {
         // Don't want to store the branding scene
-        if(strcmp(fileScene.name(), "BRAND.SCN") != 0)
+        if(strcmp(filename, "BRAND.SCN") != 0)
         {
           if(sceneNames == NULL)
           {
@@ -680,18 +690,19 @@ void InitScenes()
           }
 
           // Copy the file name into the ever expanding array
-          strcpy(sceneNames[cntScenes - 1], fileScene.name());
+          strcpy(sceneNames[cntScenes - 1], filename);
         }
-
-        // Close the file
-        fileScene.close();
       }
       else
       {
         // End of directory
         break;
       }
+    }
 
+    // Sort the list alphabetically
+    if(sceneNames != NULL && cntScenes > 0)
+    {
       // Sort the list of filenames alphabetically
       qsort(sceneNames, cntScenes, sizeof(sceneNames[0]), (__compar_fn_t)strcmp);
     }
