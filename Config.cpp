@@ -16,6 +16,7 @@ Config::Config()
     // No config data, so setup some defaults and save
     cfgItems.cfgDST = CFG_DST_OFF;
     cfgItems.cfgTimeFormat = CFG_TF_24HOUR;
+    cfgItems.cfgTimeCorrect = 0;
     cfgItems.cfgBrightness = 10;
     cfgItems.cfgClockDelay = CFG_CD_5SECS;
     strcpy(cfgItems.cfgClockFont, "STANDARD");

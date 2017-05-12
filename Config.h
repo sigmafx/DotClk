@@ -7,6 +7,7 @@ typedef struct tagConfigItems
 {
     int cfgDST;
     int cfgTimeFormat;
+    int cfgTimeCorrect;
     int cfgBrightness;
     int cfgClockDelay;
     FONTNAME cfgClockFont;
@@ -37,7 +38,7 @@ class Config
     void setValues();
 
   public:
-    static const int CntItems = 12;
+    static const int CntItems = 13;
 
   // DST
   enum {

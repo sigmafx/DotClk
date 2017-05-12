@@ -29,6 +29,7 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
 static void FeedbackDotColour(int value);
 static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue);
 static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isInit, time_t& initValue);
+static int HandleTimeCorrect(DmdFrame& frame, bool tick, bool isInit, int& initValue);
 
 // Menu IDs and running order
 enum
@@ -36,6 +37,7 @@ enum
   MENU_SETTIME = 0,
   MENU_DST,
   MENU_TIMEFORMAT,
+  MENU_TIMECORRECT,
   MENU_SLEEPTIME,
   MENU_WAKETIME,
   MENU_BRIGHTNESS,
@@ -50,21 +52,22 @@ enum
 // Standard menu structs
 struct MenuMainMenu : Menu
 {
-  MenuMainMenu() : Menu(12)
+  MenuMainMenu() : Menu(13)
   {
     menuTitle = "MAIN MENU";
     menuItems[0] = "SET TIME";
     menuItems[1] = "DST";
     menuItems[2] = "TIME FORMAT";
-    menuItems[3] = "SLEEP TIME";
-    menuItems[4] = "WAKE TIME";
-    menuItems[5] = "BRIGHTNESS";
-    menuItems[6] = "CLOCK DELAY";
-    menuItems[7] = "CLOCK FONT";
-    menuItems[8] = "DOT COLOUR";
-    menuItems[9] = "BUTTON MAPPING";
-    menuItems[10] = "SHOW BRAND";
-    menuItems[11] = "DEBUG";
+    menuItems[3] = "TIME CORRECT";
+    menuItems[4] = "SLEEP TIME";
+    menuItems[5] = "WAKE TIME";
+    menuItems[6] = "BRIGHTNESS";
+    menuItems[7] = "CLOCK DELAY";
+    menuItems[8] = "CLOCK FONT";
+    menuItems[9] = "DOT COLOUR";
+    menuItems[10] = "BUTTON MAPPING";
+    menuItems[11] = "SHOW BRAND";
+    menuItems[12] = "DEBUG";
     menuButtons[0] = "Exit";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -335,6 +338,10 @@ bool doSetup(bool isInit)
             HandleStandard(frame, menuTimeFormat, true, setItems.cfgTimeFormat);
             break ;
           
+          case MENU_TIMECORRECT: // Time Correct
+            HandleTimeCorrect(frame, false, true, setItems.cfgTimeCorrect);
+            break ;
+
           case MENU_SLEEPTIME: // Sleep Time
             HandleSetTime(frame, menuMainMenu.menuItems[idxSubMenu], false, true, setItems.cfgSleepTime);
             break;
@@ -428,6 +435,21 @@ bool doSetup(bool isInit)
           if(menuRet == 1)
           {
             config.SetCfgItems(setItems);
+          }
+          showMainMenu = true;
+        }
+        break ;        
+      }
+        
+      case MENU_TIMECORRECT: // Time Correct
+      {
+        int menuRet = HandleTimeCorrect(frame, (millis()/500)%2, false, setItems.cfgTimeCorrect);
+        if( menuRet != 0)
+        {
+          if(menuRet == 1)
+          {
+            config.SetCfgItems(setItems);
+            Teensy3Clock.compensate(setItems.cfgTimeCorrect);
           }
           showMainMenu = true;
         }
@@ -617,13 +639,13 @@ static void PaintButtons(DmdFrame& frame, const char *btnText[4])
   
   // Button Text
   fontSystem.DmpFromString(dmpButtons, btnText[0]);
-  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 4, 24);
+  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 2 + ((28 - dmpButtons.GetWidth()) / 2), 24);
   fontSystem.DmpFromString(dmpButtons, btnText[1]);
-  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 36, 24);
+  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 34 + ((28 - dmpButtons.GetWidth()) / 2), 24);
   fontSystem.DmpFromString(dmpButtons, btnText[2]);
-  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 68, 24);
+  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 66 + ((28 - dmpButtons.GetWidth()) / 2), 24);
   fontSystem.DmpFromString(dmpButtons, btnText[3]);
-  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 100, 24);
+  frame.DotBlt(dmpButtons, 0, 0, dmpButtons.GetWidth(), dmpButtons.GetHeight(), 98 + ((28 - dmpButtons.GetWidth()) / 2), 24);
 }
 
 //-------------------------
@@ -727,7 +749,7 @@ static bool HandleBrightness(DmdFrame& frame, bool isInit, int& initValue)
   static int value ;
   bool ret = true;
   Dotmap dmpBrightness ;
-  const char *btnText[] = {"Back", "Down", " Up ", "Save", };
+  const char *btnText[] = {"Back", "Down", "Up", "Save", };
   
   int btnMenuRead = btnMenu.Read();
   int btnPlusRead = btnPlus.Read();
@@ -805,7 +827,7 @@ static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isI
   
   int ret = 0;
   Dotmap dmpSetTime;
-  const char *btnText[] = {"Back", " -  ", "  + ", "" };
+  const char *btnText[] = {"Back", "-", "+", "" };
 
   char setTimeStr[9 + 1] ;
   const char *blankingPos0, *blankingPos1 ;
@@ -887,6 +909,79 @@ static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isI
 
   // Buttons
   btnText[3] = (position == 0 ? "Next" : "Save");
+  PaintButtons(frame, btnText);
+
+  return ret;
+}
+
+//------------------------------------
+// Function: HandleSetTimeCompensation
+//------------------------------------
+static int HandleTimeCorrect(DmdFrame& frame, bool tick, bool isInit, int& initValue)
+{
+  static int value ;
+  
+  int ret = 0;
+  Dotmap dmpSet;
+  const char *btnText[] = {"Back", "-", "+", "Save" };
+
+  char setStr[9 + 1] ;
+  const char *blanking;
+
+  int btnMenuRead = btnMenu.Read();
+  int btnPlusRead = btnPlus.Read();
+  int btnMinusRead = btnMinus.Read();
+  int btnEnterRead = btnEnter.Read();
+
+  if(isInit)
+  {
+    value = initValue;
+  }
+  
+  if(btnMenuRead == Button::Rising)
+  {
+    // Back
+    ret = -1;
+  }
+
+  if(btnPlusRead == Button::Rising || btnPlusRead == Button::Hold)
+  {
+    // +
+    value++;
+    if(value > 999)
+    {
+      value = 999;
+    }
+  }
+        
+  if(btnMinusRead == Button::Rising || btnMinusRead == Button::Hold)
+  {
+    // -
+    value--;
+    if(value < -999)
+    {
+      value = -999;
+    }
+  }
+  
+  if(btnEnterRead == Button::Rising)
+  {
+    // Save
+    initValue = value;
+    ret = 1;
+  }
+
+  // Title
+  PaintTitle(frame, "TIME CORRECT");
+
+  // Clock
+  blanking = tick ? "-      -" : "        ";
+  sprintf(setStr, "> %+04d <", value);
+
+  fontMenu.DmpFromString(dmpSet, setStr, blanking);
+  frame.DotBlt(dmpSet, 0, 0, dmpSet.GetWidth(), dmpSet.GetHeight(), (128 - dmpSet.GetWidth()) / 2, 11);
+
+  // Buttons
   PaintButtons(frame, btnText);
 
   return ret;

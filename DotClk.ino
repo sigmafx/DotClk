@@ -90,10 +90,10 @@ void setup()
   fontSystem.SetCharInfoFromRaw(SYSTEMFontCharInfo, sizeof(SYSTEMFontCharInfo));
 
   // Menu Font
-  dmpFont.Create(341, 11);
+  dmpFont.Create(351, 11);
   dmpFont.SetDotsFromRaw(MENUFontDots, sizeof(MENUFontDots));
   dmpFont.SetMaskFromRaw(MENUFontMask, sizeof(MENUFontMask));
-  fontMenu.Create(43, dmpFont);
+  fontMenu.Create(44, dmpFont);
   fontMenu.SetCharInfoFromRaw(MENUFontCharInfo, sizeof(MENUFontCharInfo));
 
   // Standard Font
@@ -552,7 +552,7 @@ void Boot()
   // RTC Compensation
   // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
   // For example, adjust = -100 is slows the clock by 11.92 ppm
-  Teensy3Clock.compensate(0);
+  Teensy3Clock.compensate(config.GetCfgItems().cfgTimeCorrect);
 
   // Init the SD Card
   if(InitSD())

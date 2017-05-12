@@ -11,8 +11,6 @@ DmdFrame::DmdFrame()
 
 byte DmdFrame::GetDot(int x, int y)
 {
-  byte value ;
-
   if(!CheckRange(x, y))
   {
     return 0x00;
@@ -23,8 +21,6 @@ byte DmdFrame::GetDot(int x, int y)
 
 void DmdFrame::SetDot(int x, int y, byte value)
 {
-  byte dot;
-
   if(!CheckRange(x, y))
   {
     return;
