@@ -389,6 +389,12 @@ bool doSetup(bool isInit)
         {
           if(menuRet == 1)
           {
+            if(setItems.cfgDST == Config::CFG_DST_ON)
+            {
+              // DST On so rewind time by an hour
+              DateTime -= SECS_PER_HOUR;
+            }
+            
             // Set the time
             setTime(DateTime);
             Teensy3Clock.set(DateTime);
