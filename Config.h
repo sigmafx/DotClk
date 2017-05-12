@@ -26,11 +26,15 @@ class Config
     int cfgCntItems;
     ConfigItems cfgItems;
 
+    int cfgClockDelayValue;
+    int cfgShowBrandValue;
+
   private:
     bool readEeprom();
     bool writeEeprom();
     int readBytes(int address, byte *data, size_t len);
     int writeBytes(int address, byte *data, size_t  len);
+    void setValues();
 
   public:
     static const int CntItems = 12;
@@ -89,6 +93,8 @@ class Config
     Config();
     const ConfigItems& GetCfgItems();
     bool SetCfgItems(ConfigItems& cfgItems, bool write = true);
+    int GetShowBrandValue();
+    int GetClockDelayValue();
 };
 
 #endif

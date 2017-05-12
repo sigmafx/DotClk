@@ -27,6 +27,8 @@ Config::Config()
     cfgItems.cfgSleepTime = 0;
     cfgItems.cfgWakeTime = 0;
 
+    setValues();
+
     writeEeprom();
   }
 }
@@ -60,8 +62,20 @@ bool Config::SetCfgItems(ConfigItems& cfgItems, bool write)
     // Write to EEPROM
     ret = writeEeprom();
   }
+
+  setValues();
   
   return ret;
+}
+
+int Config::GetShowBrandValue()
+{
+  return cfgShowBrandValue;
+}
+
+int Config::GetClockDelayValue()
+{
+  return cfgClockDelayValue;
 }
 
 //--------
@@ -83,6 +97,7 @@ bool Config::readEeprom()
   {
     // Read the remaining items
     readBytes(address, (byte*)&cfgItems, sizeof(cfgItems));    
+    setValues();
     ret = true;
   }
   else
@@ -140,6 +155,60 @@ int Config::writeBytes(int address, byte *data, size_t len)
   }
 
   return (int)dataByte;
+}
+
+//--------------------
+// Function: setValues
+//--------------------
+void Config::setValues()
+{
+  // Convert cfgShowBrand to Values
+  switch(cfgItems.cfgShowBrand)
+  {
+    default:
+    case Config::CFG_SB_NEVER:
+      cfgShowBrandValue = 0;
+      break ;
+    case Config::CFG_SB_EVERY2:
+      cfgShowBrandValue = 2;
+      break ;
+    case Config::CFG_SB_EVERY5:
+      cfgShowBrandValue = 5;
+      break ;
+    case Config::CFG_SB_EVERY10:
+      cfgShowBrandValue = 10;
+      break ;
+    case Config::CFG_SB_EVERY20:
+      cfgShowBrandValue = 20;
+      break ;
+  }
+
+  // Convert cfgClockDelay to Values
+  switch(cfgItems.cfgClockDelay)
+  {
+    default:
+    case Config::CFG_CD_5SECS:
+      cfgClockDelayValue = 5000;
+      break;
+    case Config::CFG_CD_10SECS:
+      cfgClockDelayValue = 10000;
+      break;
+    case Config::CFG_CD_15SECS:
+      cfgClockDelayValue = 15000;
+      break;
+    case Config::CFG_CD_30SECS:
+      cfgClockDelayValue = 30000;
+      break;
+    case Config::CFG_CD_1MIN:
+      cfgClockDelayValue = 60000;
+      break;
+    case Config::CFG_CD_2MINS:
+      cfgClockDelayValue = 120000;
+      break;
+    case Config::CFG_CD_5MINS:
+      cfgClockDelayValue = 300000;
+      break;
+  }
 }
 
 // End of file

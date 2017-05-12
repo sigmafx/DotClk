@@ -227,7 +227,7 @@ void loop()
   }
 
   // Keep the millis rolling
-  delay(10);
+  //delay(10);
 }
 
 //------------------
@@ -241,6 +241,7 @@ void doClock()
   static unsigned long millisSceneFrameDelay = 0;
   static uint16_t curScene = 0;
   static unsigned long sceneStart = 0, sceneDuration = 0;
+  static unsigned long cfgClockDelayValue = 0;
   
   DmdFrame frame;
   Dotmap dmpFrame ;
@@ -265,34 +266,11 @@ void doClock()
   if(cntScenes > 0 && !fileScene)
   {
     char pathScene[255 + 1];
-    uint16_t divider ;
+    int cfgShowBrandfValue = config.GetShowBrandValue();
 
-    // Determine when and if the Brand scene should be shown
-    switch(cfgItems.cfgShowBrand)
-    {
-      default:
-      case Config::CFG_SB_NEVER:
-        divider = 0;
-        break ;
-    
-      case Config::CFG_SB_EVERY2:
-        divider = 2;
-        break ;
+    cfgClockDelayValue = config.GetClockDelayValue();
 
-      case Config::CFG_SB_EVERY5:
-        divider = 5;
-        break ;
-
-      case Config::CFG_SB_EVERY10:
-        divider = 10;
-        break ;
-
-      case Config::CFG_SB_EVERY20:
-        divider = 20;
-        break ;
-    }
-
-    if(divider == 0 || curScene % divider > 0 || !SD.exists("/Scenes/brand.scn"))
+    if(cfgShowBrandfValue == 0 || curScene % cfgShowBrandfValue > 0 || !SD.exists("/Scenes/brand.scn"))
     {
       // Open the next scene file
       if(cfgItems.cfgDebug  == 0)
@@ -309,7 +287,7 @@ void doClock()
     else
     {
       // Use the brand scene
-      strcpy(pathScene, "/Scenes/brand.scn");
+     strcpy(pathScene, "/Scenes/brand.scn");
     }
     
     if(SD.exists(pathScene))
@@ -342,13 +320,13 @@ void doClock()
   {
     // Show the second dots
     blanking = "       ";
-    digitalWrite(pinLED, HIGH);
+    digitalWriteFast(pinLED, HIGH);
   }
   else
   {
     // Hide the second dots
     blanking = "  -    ";
-    digitalWrite(pinLED, LOW);
+    digitalWriteFast(pinLED, LOW);
   }
 
   // Create the clock dotmap  
@@ -368,34 +346,7 @@ void doClock()
       break;
   }
   
-  uint32_t cfgClockDelay;
-  switch(cfgItems.cfgClockDelay)
-  {
-    default:
-    case Config::CFG_CD_5SECS:
-      cfgClockDelay = 5000;
-      break;
-    case Config::CFG_CD_10SECS:
-      cfgClockDelay = 10000;
-      break;
-    case Config::CFG_CD_15SECS:
-      cfgClockDelay = 15000;
-      break;
-    case Config::CFG_CD_30SECS:
-      cfgClockDelay = 30000;
-      break;
-    case Config::CFG_CD_1MIN:
-      cfgClockDelay = 60000;
-      break;
-    case Config::CFG_CD_2MINS:
-      cfgClockDelay = 120000;
-      break;
-    case Config::CFG_CD_5MINS:
-      cfgClockDelay = 300000;
-      break;
-  }
-
-  if(cntScenes == 0 || millisNow - millisSceneStart < cfgClockDelay)
+  if(cntScenes == 0 || millisNow - millisSceneStart < cfgClockDelayValue)
   {
     // Generate clock dotmap
     fontClock->DmpFromString(dmpClock, clock, blanking);
@@ -421,155 +372,146 @@ void doClock()
   }
   else
   {  
-    // At least one scene file exists
-    if(fileScene)
+    if(sceneStart == 0)
     {
-      // Get the next scene frame?
-      if(millisNow - millisSceneFrameDelay > scene.GetFrameDelay())
+      sceneStart = millis();
+    }
+    
+    // Get the next scene frame?
+    if(millisSceneFrameDelay == 0 || millisNow - millisSceneFrameDelay > scene.GetFrameDelay())
+    {
+      // At the end of the scene?
+      if(!scene.Eof())
       {
-        if(sceneStart == 0)
+        if(millisSceneFrameDelay == 0)
         {
-          sceneStart = millis();
-        }
-        
-        // At the end of the scene?
-        if(!scene.Eof())
-        {
-          if(millisSceneFrameDelay == 0)
-          {
-            // First frame, start timing from now
-            millisSceneFrameDelay = millisNow;
-          }
-          else
-          {
-            // Add on the frame delay so  that we keep a good track of time
-            millisSceneFrameDelay += scene.GetFrameDelay();
-          }
-
-          // First frame or next frame
-          scene.NextFrame(fileScene);
+          // First frame, start timing from now
+          millisSceneFrameDelay = millisNow;
         }
         else
         {
-          sceneDuration = millis() - sceneStart;
-          sceneStart = 0;
-            
-          // Finished the scene close it
-          fileScene.close();
-        }
-      }
-
-      // Still open after next frame processing?
-      if(fileScene)
-      {
-        int xClock, yClock;
-
-        // Generate clock dotmap
-        switch(scene.GetClockStyle())
-        {
-          default:
-          case Scene::ClockStyleStd:
-            // Generate clock dotmap
-            fontClock->DmpFromString(dmpClock, clock, blanking);
-            xClock = (127 - dmpClock.GetWidth()) / 2;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-          case Scene::ClockStyle1:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = (42 - dmpClock.GetWidth()) / 2;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-          case Scene::ClockStyle2:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = ((42 - dmpClock.GetWidth()) / 2) + 43;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-          case Scene::ClockStyle3:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-        case Scene::ClockStyle4:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = (64 - dmpClock.GetWidth()) / 2;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-          case Scene::ClockStyle5:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = ((64 - dmpClock.GetWidth()) / 2) + 64;
-            yClock = (31 - dmpClock.GetHeight()) / 2;
-            break;
-
-        case Scene::ClockStyle6:
-            clock[5] = '\0'; // Remove am/pm
-            fontMenu.DmpFromString(dmpClock, clock, blanking);
-            xClock = scene.GetCustomX() - (dmpClock.GetWidth() / 2);
-            yClock = scene.GetCustomY();
-            break;
-        }
-        
-        // Get the frame dotmap
-        dmpFrame = scene.GetFrameDotmap();
-
-        frame.Clear();
-        if(scene.GetFrameLayer() == 0)
-        {
-          // Clock sits behind the animation frame
-          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
-          frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
-        }
-        else
-        {
-          // Clock sits above the animation frame
-          frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
-          frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
+          // Add on the frame delay so  that we keep a good track of time
+          millisSceneFrameDelay += scene.GetFrameDelay();
         }
 
-        // If debug on, display the scene file name in the top left
-        if(cfgItems.cfgDebug != 0)
-        {
-          Dotmap dmpFilename ;
-          FILENAME sceneName ;
-          char *dot ;
-
-          // Extract file name and truncate at fullstop
-          strcpy(sceneName, fileScene.name());
-          dot = strstr(sceneName, ".");
-          if(dot != NULL)
-          {
-            *dot = '\0';
-          }
-
-          fontSystem.DmpFromString(dmpFilename, sceneName);
-          dmpFilename.ClearMask();
-          frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          
-        }
-        
-        // Update the DMD
-        dmd.WaitSync();
-        dmd.SetFrame(frame);
+        // First frame or next frame
+        scene.NextFrame(fileScene);
       }
       else
       {
-        // Finished the scene, show the clock again
-        millisSceneStart = millisNow;
-        millisSceneFrameDelay = 0;
+        sceneDuration = millis() - sceneStart;
+        sceneStart = 0;
+          
+        // Finished the scene close it
+        fileScene.close();
       }
+    }
+
+    // Still open after next frame processing?
+    if(fileScene)
+    {
+      int xClock, yClock;
+
+      // Generate clock dotmap
+      switch(scene.GetClockStyle())
+      {
+        default:
+        case Scene::ClockStyleStd:
+          // Generate clock dotmap
+          fontClock->DmpFromString(dmpClock, clock, blanking);
+          xClock = (127 - dmpClock.GetWidth()) / 2;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+        case Scene::ClockStyle1:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = (42 - dmpClock.GetWidth()) / 2;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+        case Scene::ClockStyle2:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = ((42 - dmpClock.GetWidth()) / 2) + 43;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+        case Scene::ClockStyle3:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+      case Scene::ClockStyle4:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = (64 - dmpClock.GetWidth()) / 2;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+        case Scene::ClockStyle5:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = ((64 - dmpClock.GetWidth()) / 2) + 64;
+          yClock = (31 - dmpClock.GetHeight()) / 2;
+          break;
+
+      case Scene::ClockStyle6:
+          clock[5] = '\0'; // Remove am/pm
+          fontMenu.DmpFromString(dmpClock, clock, blanking);
+          xClock = scene.GetCustomX() - (dmpClock.GetWidth() / 2);
+          yClock = scene.GetCustomY();
+          break;
+      }
+
+      // Get the frame dotmap
+      dmpFrame = scene.GetFrameDotmap();
+
+      //frame.Clear();
+      if(scene.GetFrameLayer() == 0)
+      {
+        // Clock sits behind the animation frame
+        frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
+        frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
+      }
+      else
+      {
+        // Clock sits above the animation frame
+        frame.DotBlt(dmpFrame, 0, 0, dmpFrame.GetWidth(), dmpFrame.GetHeight(), 0, 0);
+        frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), xClock, yClock);
+      }
+
+      // If debug on, display the scene file name in the top left
+      if(cfgItems.cfgDebug != 0)
+      {
+        Dotmap dmpFilename ;
+        FILENAME sceneName ;
+        char *dot ;
+
+        // Extract file name and truncate at fullstop
+        strcpy(sceneName, fileScene.name());
+        dot = strstr(sceneName, ".");
+        if(dot != NULL)
+        {
+          *dot = '\0';
+        }
+
+        fontSystem.DmpFromString(dmpFilename, sceneName);
+        dmpFilename.ClearMask();
+        frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          
+      }
+      
+      // Update the DMD
+      dmd.WaitSync();
+      dmd.SetFrame(frame);
     }
     else
     {
-      // No scenes to show so revert to the clock
+      // Finished the scene, show the clock again
       millisSceneStart = millisNow;
+      millisSceneFrameDelay = 0;
     }
   }
 }

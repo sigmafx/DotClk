@@ -202,12 +202,6 @@ byte Dotmap::GetDot(int x, int y)
   int   idxOffset ;
   byte  get ;
 
-  if(!CheckRange(x, y))
-  {
-    // Out of range, return
-    return 0x00;
-  }
-
   // Determine byte offset into bitmap
   idxOffset = (x / 2) + (y * widthBytesDots);
 

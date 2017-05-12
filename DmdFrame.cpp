@@ -18,19 +18,7 @@ byte DmdFrame::GetDot(int x, int y)
     return 0x00;
   }
 
-  value = frame.dots[y][x / 2];
-  if(x % 2)
-  {
-    // Odd dot
-    value >>= 4;
-  }
-  else
-  {
-    // Even dot
-    value &= 0x0F;
-  }
-
-  return value;
+  return frame.dots[y][x];
 }
 
 void DmdFrame::SetDot(int x, int y, byte value)
@@ -42,26 +30,13 @@ void DmdFrame::SetDot(int x, int y, byte value)
     return;
   }
 
-  value &= 0x0F;
-  
-  dot = frame.dots[y][x / 2];
-  if(x % 2)
-  {
-    dot &= 0x0F;
-    dot |= (value << 4);
-  }
-  else
-  {
-    dot &= 0xF0;
-    dot |= value;
-  }
-
-  frame.dots[y][x / 2] = dot;
+  frame.dots[y][x] = value & 0x0F;
+  return;
 }
 
 void DmdFrame::Clear(byte value)
 {
-  memset(frame.dots, (value & 0x0F )| (value << 4), sizeof(frame.dots));
+  memset(frame.dots, value & 0x0F, sizeof(frame.dots));
 }
 
 void DmdFrame::DotBlt(Dotmap& dmp, int sourceX, int sourceY, int sourceWidth, int sourceHeight, int destX, int destY)
@@ -77,7 +52,7 @@ void DmdFrame::DotBlt(Dotmap& dmp, int sourceX, int sourceY, int sourceWidth, in
       // Apply mask
       if(dmp.GetMask(bltSrcX, bltSrcY))
       {
-        bltDot = this->GetDot(bltDestX, bltDestY);
+        bltDot = frame.dots[bltDestY][bltDestX];
       }
       else
       {
@@ -85,7 +60,7 @@ void DmdFrame::DotBlt(Dotmap& dmp, int sourceX, int sourceY, int sourceWidth, in
       }
 
       // Set dot
-      this->SetDot(bltDestX, bltDestY, bltDot);
+      frame.dots[bltDestY][bltDestX] = bltDot;
     }
   }
 }
