@@ -914,9 +914,9 @@ static int HandleSetTime(DmdFrame& frame, const char *title, bool tick, bool isI
   return ret;
 }
 
-//------------------------------------
-// Function: HandleSetTimeCompensation
-//------------------------------------
+//----------------------------
+// Function: HandleTimeCorrect
+//----------------------------
 static int HandleTimeCorrect(DmdFrame& frame, bool tick, bool isInit, int& initValue)
 {
   static int value ;

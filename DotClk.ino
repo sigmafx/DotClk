@@ -261,16 +261,14 @@ void doClock()
       CpuRestart();
     }
   }
-
-  // Scenes to open and scene file not open yet?
-  if(cntScenes > 0 && !fileScene)
+  else if(!fileScene)
   {
     char pathScene[255 + 1];
-    int cfgShowBrandfValue = config.GetShowBrandValue();
+    int cfgShowBrandValue = config.GetShowBrandValue();
 
     cfgClockDelayValue = config.GetClockDelayValue();
 
-    if(cfgShowBrandfValue == 0 || curScene % cfgShowBrandfValue > 0 || !SD.exists("/Scenes/brand.scn"))
+    if(cfgShowBrandValue == 0 || curScene % cfgShowBrandValue > 0 || !SD.exists("/Scenes/brand.scn"))
     {
       // Open the next scene file
       if(cfgItems.cfgDebug  == 0)
@@ -289,12 +287,9 @@ void doClock()
       // Use the brand scene
      strcpy(pathScene, "/Scenes/brand.scn");
     }
-    
-    if(SD.exists(pathScene))
-    {
-      fileScene = SD.open(pathScene);
-    }
 
+    // Open the scene file
+    fileScene = SD.open(pathScene);
     if(fileScene)
     {
       // Creste the scene object from the scene file
@@ -314,7 +309,7 @@ void doClock()
     curScene++;
   }
 
-  // Generate the clock dotmap as this is always used whether hidden behind a scene frame or part of it through the mask or on top
+  // Generate the clock string and blanking as this is always used whether hidden behind a scene frame or part of it through the mask or on top
   // Second beat
   if((((millisNow) / 500) % 2) == 0)
   {
@@ -329,7 +324,7 @@ void doClock()
     digitalWriteFast(pinLED, LOW);
   }
 
-  // Create the clock dotmap  
+  // Create the clock string
   switch(cfgItems.cfgTimeFormat)
   {
     default:
@@ -365,10 +360,6 @@ void doClock()
       dmpDuration.ClearMask();
       frame.DotBlt(dmpDuration, 0, 0, dmpDuration.GetWidth(), dmpDuration.GetHeight(), 0, 0);         
     }
-    
-    // Update the DMD
-    dmd.WaitSync();
-    dmd.SetFrame(frame);
   }
   else
   {  
@@ -399,9 +390,6 @@ void doClock()
       }
       else
       {
-        sceneDuration = millis() - sceneStart;
-        sceneStart = 0;
-          
         // Finished the scene close it
         fileScene.close();
       }
@@ -502,18 +490,29 @@ void doClock()
         dmpFilename.ClearMask();
         frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          
       }
-      
-      // Update the DMD
-      dmd.WaitSync();
-      dmd.SetFrame(frame);
     }
     else
     {
       // Finished the scene, show the clock again
       millisSceneStart = millisNow;
       millisSceneFrameDelay = 0;
+
+      // Reset frame duration timer
+      sceneDuration = millis() - sceneStart;
+      sceneStart = 0;
+        
+      // Generate clock dotmap
+      fontClock->DmpFromString(dmpClock, clock, blanking);
+  
+      // Only showing the clock between animations
+      frame.Clear();
+      frame.DotBlt(dmpClock, 0, 0, dmpClock.GetWidth(), dmpClock.GetHeight(), (127 - dmpClock.GetWidth()) / 2, (31 - dmpClock.GetHeight())/2);
     }
   }
+
+  // Update the DMD
+  dmd.WaitSync();
+  dmd.SetFrame(frame);
 }
 
 //---------------
