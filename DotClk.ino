@@ -610,12 +610,13 @@ void InitScenes()
     // Loop on each scene file
     while(true)
     {
-      FILENAME filename;
-  
-      if(dirScenes.getNextFilename(filename))
+      const char *file;
+
+      file = dirScenes.getNextFile();
+      if(file != NULL)
       {
         // Don't want to store the branding scene
-        if(strcmp(filename, "BRAND.SCN") != 0)
+        if(strcmp(file, "BRAND.SCN") != 0)
         {
           if(sceneNames == NULL)
           {
@@ -631,7 +632,7 @@ void InitScenes()
           }
 
           // Copy the file name into the ever expanding array
-          strcpy(sceneNames[cntScenes - 1], filename);
+          strcpy(sceneNames[cntScenes - 1], file);
         }
       }
       else
