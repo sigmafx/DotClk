@@ -411,53 +411,16 @@ void doClock()
           yClock = (31 - dmpClock.GetHeight()) / 2;
           break;
 
-        case Scene::ClockStyle1:
-          clock[5] = '\0'; // Remove am/pm
-          fontMenu.DmpFromString(dmpClock, clock, blanking);
-          xClock = (42 - dmpClock.GetWidth()) / 2;
-          yClock = (31 - dmpClock.GetHeight()) / 2;
-          break;
-
-        case Scene::ClockStyle2:
-          clock[5] = '\0'; // Remove am/pm
-          fontMenu.DmpFromString(dmpClock, clock, blanking);
-          xClock = ((42 - dmpClock.GetWidth()) / 2) + 43;
-          yClock = (31 - dmpClock.GetHeight()) / 2;
-          break;
-
-        case Scene::ClockStyle3:
-          clock[5] = '\0'; // Remove am/pm
-          fontMenu.DmpFromString(dmpClock, clock, blanking);
-          xClock = ((42 - dmpClock.GetWidth()) / 2) + 87;
-          yClock = (31 - dmpClock.GetHeight()) / 2;
-          break;
-
-      case Scene::ClockStyle4:
-          clock[5] = '\0'; // Remove am/pm
-          fontMenu.DmpFromString(dmpClock, clock, blanking);
-          xClock = (64 - dmpClock.GetWidth()) / 2;
-          yClock = (31 - dmpClock.GetHeight()) / 2;
-          break;
-
-        case Scene::ClockStyle5:
-          clock[5] = '\0'; // Remove am/pm
-          fontMenu.DmpFromString(dmpClock, clock, blanking);
-          xClock = ((64 - dmpClock.GetWidth()) / 2) + 64;
-          yClock = (31 - dmpClock.GetHeight()) / 2;
-          break;
-
-      case Scene::ClockStyle6:
+        case Scene::ClockStyleCustom:
           clock[5] = '\0'; // Remove am/pm
           fontMenu.DmpFromString(dmpClock, clock, blanking);
           xClock = scene.GetCustomX() - (dmpClock.GetWidth() / 2);
-          yClock = scene.GetCustomY();
+          yClock = scene.GetCustomY() - (dmpClock.GetHeight() / 2);
           break;
       }
 
       // Get the frame dotmap
       dmpFrame = scene.GetFrameDotmap();
-
-      //frame.Clear();
       if(scene.GetFrameLayer() == 0)
       {
         // Clock sits behind the animation frame
@@ -472,7 +435,7 @@ void doClock()
       }
 
       // If debug on, display the scene file name in the top left
-      if(cfgItems.cfgDebug != 0)
+      if(cfgItems.cfgDebug != 0 && fileScene)
       {
         Dotmap dmpFilename ;
         FILENAME sceneName ;
@@ -485,7 +448,7 @@ void doClock()
         {
           *dot = '\0';
         }
-
+        
         fontSystem.DmpFromString(dmpFilename, sceneName);
         dmpFilename.ClearMask();
         frame.DotBlt(dmpFilename, 0, 0, dmpFilename.GetWidth(), dmpFilename.GetHeight(), 0, 0);          

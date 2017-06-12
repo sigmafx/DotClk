@@ -27,12 +27,7 @@ class Scene
   public:
     enum {
       ClockStyleStd = 0,
-      ClockStyle1,
-      ClockStyle2,
-      ClockStyle3,
-      ClockStyle4,
-      ClockStyle5,
-      ClockStyle6,
+      ClockStyleCustom,
     };
     
   public:
