@@ -595,7 +595,6 @@ bool doSetup(bool isInit)
   }
   
   // Update the DMD
-  dmd.WaitSync();
   dmd.SetFrame(frame);
 
   return ret;

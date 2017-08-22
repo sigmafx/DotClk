@@ -118,6 +118,9 @@ void setup()
 
   // Boot
   Boot();
+
+  // Display test if 'Enter' button pressed
+  DisplayTest();
   
   return;
 }
@@ -128,7 +131,7 @@ void setup()
 void loop()
 {
   static int mode = modeClock;
-  
+
   time_t tNow = NowDST();
   time_t tWake = config.GetCfgItems().cfgWakeTime;
 
@@ -225,9 +228,6 @@ void loop()
       mode = modeClock;
       break;
   }
-
-  // Keep the millis rolling
-  //delay(10);
 }
 
 //------------------
@@ -474,7 +474,6 @@ void doClock()
   }
 
   // Update the DMD
-  dmd.WaitSync();
   dmd.SetFrame(frame);
 }
 
@@ -492,10 +491,15 @@ void Boot()
   // Show the version number of the firmware
   sprintf(bootMsg, "DOTCLK V%s", VERSION);
   fontSystem.DmpFromString(dmpBootMsg, bootMsg);
-  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (32 - dmpBootMsg.GetHeight())/2);
+  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (16 - dmpBootMsg.GetHeight()) - 1);
+
+  // Show the version number of the firmware
+  ConfigItems cfgItems = config.GetCfgItems();
+  sprintf(bootMsg, "SCREEN TYPE:%d", cfgItems.cfgDmdType);
+  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
+  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, 16 + 1);
 
   // Update the DMD
-  dmd.WaitSync();
   dmd.SetFrame(frame);
 
   // Set up RTC
@@ -720,10 +724,26 @@ void InitDmdType()
     config.SetCfgItems(cfgItems);
   }
 
-  // Wait for all buttons to be released
+  // Wait for buttons to be released
   while(btnMenu.ReadRaw() == Button::On ||
-    btnMinus.ReadRaw() == Button::On ||
-    btnPlus.ReadRaw() == Button::On ||
-    btnEnter.ReadRaw() == Button::On) ;
+    btnMinus.ReadRaw() == Button::On) ;
+}
+
+//----------------------
+// Function: DisplayTest
+//----------------------
+void DisplayTest()
+{
+  DmdFrame frame ;
+    
+  if(btnEnter.ReadRaw() == Button::On)
+  {
+    // Show test image - all dots on
+    frame.Clear(0x0F);
+    dmd.SetFrame(frame);
+
+    // Wait for button to be pressed again
+    while(btnEnter.Read() != Button::Rising);
+  }
 }
 

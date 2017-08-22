@@ -12,7 +12,7 @@ class Dmd
     DmdFrameRaw *bufferActive;
     DmdFrameRaw *bufferInactive;
     DmdFrameRaw *bufferInUse;
- 
+    
     IntervalTimer timerDmd ;
 
     int frame ;
