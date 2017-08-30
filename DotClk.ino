@@ -742,6 +742,9 @@ void DisplayTest()
     frame.Clear(0x0F);
     dmd.SetFrame(frame);
 
+    // Wait for button to be released
+    while(btnEnter.ReadRaw() == Button::On);
+
     // Wait for button to be pressed again
     while(btnEnter.Read() != Button::Rising);
   }
