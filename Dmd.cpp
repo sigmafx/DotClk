@@ -32,7 +32,7 @@ Dmd::Dmd()
 //---------------------
 // Function: Initialise
 //---------------------
-void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK)
+void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int pinB1, int pinB2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK)
 {
   // Screen pin outputs
   pinMode(pinEN, OUTPUT);
@@ -40,6 +40,8 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
   pinMode(pinR2, OUTPUT);
   pinMode(pinG1, OUTPUT);
   pinMode(pinG2, OUTPUT);
+  pinMode(pinB1, OUTPUT);
+  pinMode(pinB2, OUTPUT);
   pinMode(pinLA, OUTPUT);
   pinMode(pinLB, OUTPUT);
   pinMode(pinLC, OUTPUT);
@@ -53,6 +55,8 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
   digitalWrite(pinR2, LOW);
   digitalWrite(pinG1, LOW);
   digitalWrite(pinG2, LOW);
+  digitalWrite(pinB1, LOW);
+  digitalWrite(pinB2, LOW);
   digitalWrite(pinLA, LOW);
   digitalWrite(pinLB, LOW);
   digitalWrite(pinLC, LOW);
@@ -66,6 +70,8 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
   this->pinR2 = pinR2;
   this->pinG1 = pinG1;
   this->pinG2 = pinG2;
+  this->pinB1 = pinB1;
+  this->pinB2 = pinB2;
   this->pinLA = pinLA;
   this->pinLB = pinLB;
   this->pinLC = pinLC;
@@ -137,7 +143,7 @@ bool Dmd::SetColour(byte set)
   bool ret ;
 
    // Check range
-  if(set > 2)
+  if(set > 0)
   {
     // Out of range, return
     ret = false;
@@ -240,7 +246,7 @@ int Dmd::UpdateRowType0()
   int ret ;
   int col;
   byte *rowTop, *rowBottom ;
-  byte mask, maskR, maskG;
+  byte mask, maskR, maskG, maskB;
 
   rowTop = bufferInUse->dots[row];
   rowBottom = bufferInUse->dots[row + 16];
@@ -248,6 +254,7 @@ int Dmd::UpdateRowType0()
   mask = 0x01 << frame;
   maskR = (colour + 1) & 0x01 ? 0xFF : 0x00;
   maskG = (colour + 1) & 0x02 ? 0xFF : 0x00;
+  maskB = (colour + 1) & 0x04 ? 0xFF : 0x00;
   
   // Process each column, 2 at a time
   for(col = 0; col < 128; col++)
@@ -276,8 +283,8 @@ int Dmd::UpdateRowType0()
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
     // Blue
-    //digitalWriteFast(pinB1, data1 & maskB);
-    //digitalWriteFast(pinB2, data2 & maskB);
+    digitalWriteFast(pinB1, data1 & maskB);
+    digitalWriteFast(pinB2, data2 & maskB);
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);
@@ -352,7 +359,7 @@ int Dmd::UpdateRowType1()
   int ret ;
   int col;
   byte *rowTop, *rowBottom ;
-  byte mask, maskR, maskG;
+  byte mask, maskR, maskG, maskB;
 
   rowTop = bufferInUse->dots[row];
   rowBottom = bufferInUse->dots[row + 16];
@@ -360,6 +367,7 @@ int Dmd::UpdateRowType1()
   mask = 0x01 << frame;
   maskR = (colour + 1) & 0x01 ? 0xFF : 0x00;
   maskG = (colour + 1) & 0x02 ? 0xFF : 0x00;
+  maskB = (colour + 1) & 0x04 ? 0xFF : 0x00;
   
   // Process each column, 2 at a time
   // Code has been flattened out to improve performance
@@ -392,8 +400,8 @@ int Dmd::UpdateRowType1()
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
     // Blue
-    //digitalWriteFast(pinB1, data1 & maskB);
-    //digitalWriteFast(pinB2, data2 & maskB);
+    digitalWriteFast(pinB1, data1 & maskB);
+    digitalWriteFast(pinB2, data2 & maskB);
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);

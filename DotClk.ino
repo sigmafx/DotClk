@@ -27,11 +27,14 @@ enum MODE {
 typedef char FILENAME[8+1+3+1];
 
 // Pin Assignments
+// HUB08
 const int pinEN = 19 ; // B2
 const int pinR1 = 20 ; // D5
 const int pinR2 = 21 ; // D6
-const int pinG1 = 3 ;  // A12
-const int pinG2 = 2 ;  // D0
+const int pinG1 = 17 ;
+const int pinG2 = 18 ;
+const int pinB1 = 22 ;
+const int pinB2 = 23 ;
 const int pinLA = 7 ;  // D2
 const int pinLB = 6 ;  // D4
 const int pinLC = 5 ;  // D7
@@ -40,6 +43,23 @@ const int pinLT = 1 ;  // B17
 const int pinSK = 0 ;  // B16
 const int pinLED = 13;
 const int pinGND[] = { 16, 17, 18, 22, 23 } ;
+
+// HUB75
+//const int pinEN = 23; // A9
+//const int pinR1 = 16; // A2
+//const int pinR2 = 18; // A4
+//const int pinG1 = 17;  // A3
+//const int pinG2 = 19;  // A5
+//const int pinB1 = 7;  // 
+//const int pinB2 = 5;  // 
+//const int pinLA = 20;  // A6
+//const int pinLB = 3;  // 
+//const int pinLC = 21;  // A7 
+//const int pinLD = 2;  // 
+//const int pinLT = 1;  // 
+//const int pinSK = 22;  // A8
+//const int pinLED = 13;
+//const int pinGND[] = { 6, 4, 0 } ;
 
 // Fonts
 Font fontStandard;
@@ -105,7 +125,7 @@ void setup()
 
   // Initialise the DMD
   dmd.SetDmdType(config.GetCfgItems().cfgDmdType);
-  dmd.Initialise(pinEN, pinR1, pinR2, pinG1, pinG2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
+  dmd.Initialise(pinEN, pinR1, pinR2, pinG1, pinG2, pinB1, pinB2, pinLA, pinLB, pinLC, pinLD, pinLT, pinSK);
 
   // Set DMD brightness from config
   dmd.SetBrightness(config.GetCfgItems().cfgBrightness);

@@ -28,6 +28,8 @@ class Dmd
     int pinR2;
     int pinG1;
     int pinG2;
+    int pinB1;
+    int pinB2;
     int pinLA;
     int pinLB;
     int pinLC;
@@ -40,7 +42,7 @@ class Dmd
 
   public:
     Dmd();
-    void Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK);
+    void Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int pinB1, int pinB2, int pinLA, int pinLB, int pinLC, int pinLD, int pinLT, int pinSK);
     void Start();
     void Stop();
     bool IsActive();
