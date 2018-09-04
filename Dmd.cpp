@@ -1,3 +1,4 @@
+#include <IntervalTimer.h>
 #include <Arduino.h>
 
 #include "Globals.h"
@@ -5,7 +6,8 @@
 // Funtion Prototypes
 extern "C"
 {
-static void isrDmd();
+static void isrDmdType0();
+static void isrDmdType1();
 }
 
 //----------------------
@@ -21,10 +23,9 @@ Dmd::Dmd()
   // Init other variables
   frame = 0;
   row = 0;
-  active = false;
   brightness = 0;
   colour = 0x00;
-
+  
   // Set interrupt priority
   timerDmd.priority(200);
 }
@@ -86,8 +87,7 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
 void Dmd::Start()
 {
   // Start the interrupts
-  active = true;
-  timerDmd.begin(isrDmd, 1);
+  timerDmd.begin(dmdType == 1 ? isrDmdType1 : isrDmdType0, 1);
 }
 
 //---------------
@@ -95,16 +95,11 @@ void Dmd::Start()
 //---------------
 void Dmd::Stop()
 {
-  // Stop the display
-  active = false;
-}
+  // Stop the interrupts
+  timerDmd.end();
 
-//-------------------
-// Function: IsActive
-//-------------------
-bool Dmd::IsActive()
-{
-  return active;
+  // Disable display
+  digitalWriteFast(pinEN, HIGH);
 }
 
 //------------------------
@@ -138,12 +133,15 @@ int Dmd::GetBrightness()
   return brightness;
 }
 
+//--------------------
+// Function: SetColour
+//--------------------
 bool Dmd::SetColour(byte set)
 {
   bool ret ;
 
    // Check range
-  if(set > 0)
+  if(set > 7)
   {
     // Out of range, return
     ret = false;
@@ -158,6 +156,9 @@ bool Dmd::SetColour(byte set)
   return ret;  
 }
 
+//--------------------
+// Function: GetColour
+//--------------------
 byte Dmd::GetColour()
 {
   return colour;  
@@ -193,10 +194,10 @@ bool Dmd::WaitSync(uint32_t timeout)
   return true;
 }
 
-//-----------------
-// Function: IsrDmd
-//-----------------
-void Dmd::IsrDmd()
+//------------------
+// Function: IsrDmd0
+//------------------
+void Dmd::IsrDmdType0()
 {
   int isrDelay;
 
@@ -204,25 +205,27 @@ void Dmd::IsrDmd()
   timerDmd.end();
 
   // Update a Dmd row
-  if(dmdType == 0)
-  {
-    isrDelay = UpdateRowType0();
-  }
-  else
-  {
-    isrDelay = UpdateRowType1();
-  }
-  
+  isrDelay = UpdateRowType0();
+
   // Set up next interrupt
-  if(active)
-  {
-    timerDmd.begin(isrDmd, isrDelay);
-  }
-  else
-  {
-    // Disable display
-    digitalWriteFast(pinEN, HIGH);
-  }
+  timerDmd.begin(isrDmdType0, isrDelay);
+}
+
+//------------------
+// Function: IsrDmd1
+//------------------
+void Dmd::IsrDmdType1()
+{
+  int isrDelay;
+
+  // Disable the timer interrupt
+  timerDmd.end();
+
+  // Update a Dmd row
+  isrDelay = UpdateRowType1();
+
+  // Set up next interrupt
+  timerDmd.begin(isrDmdType1, isrDelay);
 }
 
 //---------------------
@@ -257,7 +260,7 @@ int Dmd::UpdateRowType0()
   maskB = (colour + 1) & 0x04 ? 0xFF : 0x00;
   
   // Process each column, 2 at a time
-  for(col = 0; col < 128; col++)
+  for(col = 0; col < 128; )
   {
     byte  data1,
           data2;
@@ -291,6 +294,38 @@ int Dmd::UpdateRowType0()
 
     rowTop++;
     rowBottom++;
+    col++;
+    
+    // Disable the display at the appropriate column, thereby setting the brightness
+    if(col ==  brightness)
+    {
+      digitalWriteFast(pinEN, HIGH);
+    }
+
+    // Extract the 2 data rows
+    data1 = *rowTop & mask;
+    data2 = *rowBottom & mask;
+    
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
+
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    digitalWriteFast(pinB1, data1 & maskB);
+    digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
+
+    rowTop++;
+    rowBottom++;
+    col++;
   }
 
   // Data latch LOW
@@ -309,36 +344,19 @@ int Dmd::UpdateRowType0()
   digitalWriteFast(pinEN, LOW);
 
   // Return value is row pause to create the dot intensities
-  switch(frame)
-  {
-    default:
-    case 0:
-      ret = 1;
-      break ;
-
-    case 1:
-      ret = 2;
-      break ;
-
-    case 2:
-      ret = 30 ;
-      break ;
-
-    case 3:
-      ret = 45;
-      break ;
-  }
-
+  int rets[] = { 1, 2, 30, 45};
+  ret = rets[frame];
+  
   // Next row
   row++;
-  if(row == 16)
+  if(row & 0x10)
   {
     // Finished a frame
     row = 0;
 
     // Next frame
     frame++;
-    if(frame == 4)
+    if(frame & 0x04)
     {
       // Finished a full frame
       frame = 0;
@@ -371,7 +389,7 @@ int Dmd::UpdateRowType1()
   
   // Process each column, 2 at a time
   // Code has been flattened out to improve performance
-  for(col = 0; col < 128; col++)
+  for(col = 0; col < 128; )
   {
     byte  data1,
           data2;
@@ -408,6 +426,41 @@ int Dmd::UpdateRowType1()
 
     rowTop++;
     rowBottom++;
+    col++;
+
+    // Disable the display at the appropriate column, thereby setting the brightness
+    if(col ==  brightness)
+    {
+      digitalWriteFast(pinEN, HIGH);
+    }
+
+    // Extract the 2 data rows
+    data1 = *rowTop & mask;
+    data2 = *rowBottom & mask;
+
+    data1 = !data1;
+    data2 = !data2;
+    
+    // Clock LOW
+    digitalWriteFast(pinSK, LOW);
+
+    // Set data
+    // Red
+    digitalWriteFast(pinR1, data1 & maskR);
+    digitalWriteFast(pinR2, data2 & maskR);
+    // Green
+    digitalWriteFast(pinG1, data1 & maskG);
+    digitalWriteFast(pinG2, data2 & maskG);
+    // Blue
+    digitalWriteFast(pinB1, data1 & maskB);
+    digitalWriteFast(pinB2, data2 & maskB);
+
+    // Clock HIGH
+    digitalWriteFast(pinSK, HIGH);
+
+    rowTop++;
+    rowBottom++;
+    col++;
   }
 
   // Data latch LOW
@@ -426,36 +479,19 @@ int Dmd::UpdateRowType1()
   digitalWriteFast(pinEN, LOW);
 
   // Return value is row pause to create the dot intensities
-  switch(frame)
-  {
-    default:
-    case 0:
-      ret = 1;
-      break ;
-
-    case 1:
-      ret = 2;
-      break ;
-
-    case 2:
-      ret = 30 ;
-      break ;
-
-    case 3:
-      ret = 45;
-      break ;
-  }
+  int rets[] = { 1, 2, 30, 45};
+  ret = rets[frame];
 
   // Next row
   row++;
-  if(row == 16)
+  if(row & 0x10)
   {
     // Finished a frame
     row = 0;
 
     // Next frame
     frame++;
-    if(frame == 4)
+    if(frame & 0x04)
     {
       // Finished a full frame
       frame = 0;
@@ -468,13 +504,26 @@ int Dmd::UpdateRowType1()
   return ret;
 }
 
-//-----------------
-// Function: isrDmd
-//-----------------
-static void isrDmd()
+//------------------
+// Function: isrDmd0
+//------------------
+static void isrDmdType0()
 {
   // Call the class instance isr routine
-  dmd.IsrDmd();
+  noInterrupts();
+  dmd.IsrDmdType0();
+  interrupts();
+}
+
+//------------------
+// Function: isrDmd1
+//------------------
+static void isrDmdType1()
+{
+  // Call the class instance isr routine
+  noInterrupts();
+  dmd.IsrDmdType1();
+  interrupts();
 }
 
 // End of file

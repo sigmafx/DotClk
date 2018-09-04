@@ -21,8 +21,6 @@ class Dmd
     byte colour;
     int dmdType ;
     
-    volatile bool active;
-
     int pinEN;
     int pinR1;
     int pinR2;
@@ -52,7 +50,8 @@ class Dmd
     byte GetColour();
     void SetFrame(DmdFrame& frame);
     bool WaitSync(uint32_t timeout = 0);  
-    void IsrDmd();
+    void IsrDmdType0();
+    void IsrDmdType1();
     void SetDmdType(int dmdType);
     
 };
