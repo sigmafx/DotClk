@@ -22,6 +22,11 @@ https://www.pjrc.com/teensy/tutorial.html
 
 You can then grab the code from the repository and compile / update the code locally as you need.
 
+N.B. You'll need to use the SD library in the following repository:
+https://github.com/sigmafx/SD
+
+This includes changes for fast directory listing using newly added function getNextFile.
+
 ## How to Use DotClk
 The code is designed for use with the DotClk interface board. The code is well documented for the pin assignments for the various connections to the screen and the control buttons.
 
