@@ -27,6 +27,10 @@ https://github.com/sigmafx/SD
 
 This includes changes for fast directory listing using newly added function getNextFile.
 
+When compiling the code use the following CPU Speeds (from Arduino IDE menu Tools->CPU Speed):
+Teensy 3.6: 180 MHz
+Teensy 3.5: 168 MHz (overclocked)
+
 ## How to Use DotClk
 The code is designed for use with the DotClk interface board. The code is well documented for the pin assignments for the various connections to the screen and the control buttons.
 
