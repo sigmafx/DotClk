@@ -3,7 +3,7 @@
 #include <SPI.h>
 #include <TimeLib.h>
 
-#define HUB75
+#define HUB08
 
 // Local Includes
 #include "Globals.h"
