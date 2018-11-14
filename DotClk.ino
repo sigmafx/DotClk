@@ -315,7 +315,7 @@ void doClock()
     }
 
     // Open the scene file
-    fileScene = SD.open(pathScene);
+    fileScene = SD.open(pathScene, FILE_READ);
     if(fileScene)
     {
       // Creste the scene object from the scene file
@@ -582,7 +582,7 @@ bool InitSD()
 //---------------------
 void InitScenes()
 {
-  File dirScenes = SD.open("/Scenes");
+  File dirScenes = SD.open("/Scenes", FILE_READ);
   
   // Scene directory exists?
   if(dirScenes)
@@ -665,7 +665,7 @@ void InitClockFont()
     if(strcmp(config.GetCfgItems().cfgClockFont, "STANDARD") != 0)
     {
       // Open the 'Fonts' directory
-      File dirFonts = SD.open("/Fonts");    
+      File dirFonts = SD.open("/Fonts", FILE_READ);    
       if(dirFonts)
       {
         do

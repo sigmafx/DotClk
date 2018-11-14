@@ -242,7 +242,7 @@ bool doSetup(bool isInit)
     }
     fontUserNames = new FONTNAME[fontCount];
 
-    File dirFonts = SD.open("/Fonts");
+    File dirFonts = SD.open("/Fonts", FILE_READ);
     if(dirFonts)
     {
       int fontCur ;

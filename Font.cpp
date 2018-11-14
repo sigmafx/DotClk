@@ -170,7 +170,7 @@ byte Font::GetFontCount()
   byte ret = 0;
 
   // Open the 'Fonts' directory
-  File dirFonts = SD.open("/Fonts");    
+  File dirFonts = SD.open("/Fonts", FILE_READ);    
   if(dirFonts)
   {
     do
