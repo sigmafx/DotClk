@@ -242,8 +242,8 @@ bool doSetup(bool isInit)
     }
     fontUserNames = new FONTNAME[fontCount];
 
-    File dirFonts = SD.open("/Fonts", FILE_READ);
-    if(dirFonts)
+    SdFile dirFonts;
+    if(dirFonts.open("/Fonts", O_RDONLY))
     {
       int fontCur ;
 
@@ -252,8 +252,9 @@ bool doSetup(bool isInit)
 
       for(fontCur = 0; fontCur < fontCount; fontCur++)
       {
-        File fileFont = dirFonts.openNextFile();
-        if(fileFont)
+        SdFile fileFont;
+        
+        if(fileFont.openNext(&dirFonts, O_RDONLY))
         {
           Font::GetFontName(fileFont, fontUserNames[fontCur]);
           fileFont.close();

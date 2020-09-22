@@ -1,6 +1,5 @@
 // Library Includes
-#include <SD.h>
-#include <SPI.h>
+#include <SdFat.h>
 #include <TimeLib.h>
 
 #define HUB08
@@ -77,12 +76,18 @@ FILENAME *sceneNames = NULL;
 uint16_t cntScenes = 0;
 uint16_t curScene = 0;
 
+// SD Card
+SdFatSdio SD;
+
 //----------------
 // Function: setup
 //----------------
 void setup()
 {  
   Dotmap dmpFont;
+
+  // Set low voltage level to HIGH
+  PMC_LVDSC1 |= PMC_LVDSC1_LVDV(1);
 
   // Serial debug
   Serial.begin(9600);
@@ -261,7 +266,7 @@ void loop()
 //------------------
 void doClock()
 {
-  static File fileScene ;
+  static SdFile fileScene ;
   static Scene scene;
   static unsigned long millisSceneStart = millis();
   static unsigned long millisSceneFrameDelay = 0;
@@ -287,7 +292,7 @@ void doClock()
       CpuRestart();
     }
   }
-  else if(!fileScene)
+  else if(!fileScene.isOpen())
   {
     char pathScene[255 + 1];
     int cfgShowBrandValue = config.GetShowBrandValue();
@@ -315,8 +320,7 @@ void doClock()
     }
 
     // Open the scene file
-    fileScene = SD.open(pathScene, FILE_READ);
-    if(fileScene)
+    if(fileScene.open(pathScene, O_RDONLY))
     {
       // Creste the scene object from the scene file
       if(!scene.Create(fileScene))
@@ -422,7 +426,7 @@ void doClock()
     }
 
     // Still open after next frame processing?
-    if(fileScene)
+    if(fileScene.isOpen())
     {
       int xClock, yClock;
 
@@ -461,14 +465,14 @@ void doClock()
       }
 
       // If debug on, display the scene file name in the top left
-      if(cfgItems.cfgDebug != 0 && fileScene)
+      if(cfgItems.cfgDebug != 0 && fileScene.isOpen())
       {
         Dotmap dmpFilename ;
         FILENAME sceneName ;
         char *dot ;
 
         // Extract file name and truncate at fullstop
-        strcpy(sceneName, fileScene.name());
+        fileScene.getName(sceneName, sizeof(sceneName));
         dot = strstr(sceneName, ".");
         if(dot != NULL)
         {
@@ -571,10 +575,8 @@ void Boot()
 bool InitSD()
 {
   // Connect to SD Card
-  SD.begin(BUILTIN_SDCARD);
-
   // Return whether we can see the Scenes directory
-  return SD.exists("/Scenes") ? true : false;
+  return SD.begin() && SD.exists("/Scenes");
 }
 
 //---------------------
@@ -582,10 +584,11 @@ bool InitSD()
 //---------------------
 void InitScenes()
 {
-  File dirScenes = SD.open("/Scenes", FILE_READ);
-  
+  SdFile dirScenes;
+  SdFile file ;
+
   // Scene directory exists?
-  if(dirScenes)
+  if(dirScenes.open("/Scenes", O_RDONLY))
   {
     // Previous list exists?
     if(sceneNames != NULL)
@@ -597,41 +600,35 @@ void InitScenes()
       sceneNames = NULL;
     }
 
-    // Rewind the directory
-    dirScenes.rewindDirectory();
-
     // Loop on each scene file
-    while(true)
+    while(file.openNext(&dirScenes, O_RDONLY))
     {
-      FILENAME file;
+        FILENAME filename ;
 
-      if(dirScenes.getNextFile(file))
-      {
-        // Don't want to store the branding scene
-        if(strcmp(file, "BRAND.SCN") != 0)
+        if(file.getName(filename, sizeof(filename)))
         {
-          if(sceneNames == NULL)
+          // Don't want to store the branding scene
+          if(strcmp(filename, "BRAND.SCN") != 0)
           {
-            // First time, malloc
-            cntScenes = 1;        
-            sceneNames = (FILENAME *)malloc(sizeof(FILENAME));
-          }
-          else
-          {
-            // Subsequent time, realloc
-            cntScenes++;
-            sceneNames = (FILENAME *)realloc(sceneNames, sizeof(FILENAME) * (cntScenes));
-          }
-
-          // Copy the file name into the ever expanding array
-          strcpy(sceneNames[cntScenes - 1], file);
+            if(sceneNames == NULL)
+            {
+              // First time, malloc
+              cntScenes = 1;        
+              sceneNames = (FILENAME *)malloc(sizeof(FILENAME));
+            }
+            else
+            {
+              // Subsequent time, realloc
+              cntScenes++;
+              sceneNames = (FILENAME *)realloc(sceneNames, sizeof(FILENAME) * (cntScenes));
+            }
+  
+            // Copy the file name into the ever expanding array
+            strcpy(sceneNames[cntScenes - 1], filename);
         }
       }
-      else
-      {
-        // End of directory
-        break;
-      }
+
+      file.close();
     }
 
     // Sort the list alphabetically
@@ -665,38 +662,30 @@ void InitClockFont()
     if(strcmp(config.GetCfgItems().cfgClockFont, "STANDARD") != 0)
     {
       // Open the 'Fonts' directory
-      File dirFonts = SD.open("/Fonts", FILE_READ);    
-      if(dirFonts)
+      SdFile dirFonts;
+      
+      if(dirFonts.open("/Fonts", O_RDONLY))
       {
-        do
+        SdFile fileFont;
+        
+        while(fileFont.openNext(&dirFonts, O_RDONLY))
         {
-          // Open each font file
-          File fileFont = dirFonts.openNextFile();
-          if(fileFont)
+          FONTNAME fontName ;
+
+          // Get the font name and compare against the user selected one in config
+          Font::GetFontName(fileFont, fontName);
+          if(strcmp(config.GetCfgItems().cfgClockFont, fontName) == 0)
           {
-            FONTNAME fontName ;
+            // Found our font, now load it for use
+            fontUser = new Font();
 
-            // Get the font name and compare against the user selected one in config
-            Font::GetFontName(fileFont, fontName);
-            if(strcmp(config.GetCfgItems().cfgClockFont, fontName) == 0)
-            {
-              // Found our font, now load it for use
-              fontUser = new Font();
-
-              // Load the font
-              fontUser->Create(fileFont);
-              break;
-            }
-
-            fileFont.close();
-          }
-          else
-          {
-            // Problem reading a font file so quit the loop
+            // Load the font
+            fontUser->Create(fileFont);
             break;
           }
+
+          fileFont.close();
         }
-        while(true);
 
         if(fontUser != NULL)
         {

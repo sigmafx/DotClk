@@ -19,7 +19,7 @@ Scene::~Scene()
 {
 }
 
-bool Scene::Create(File& fileScene)
+bool Scene::Create(SdFile& fileScene)
 {
   bool ret = true;
   uint16_t version;
@@ -86,7 +86,7 @@ bool Scene::Eof()
   return (curFrame == cntFrames && (doLast == DONE || doLast == NA));
 }
 
-bool Scene::NextFrame(File& fileScene)
+bool Scene::NextFrame(SdFile& fileScene)
 {
   bool ret = true;
   

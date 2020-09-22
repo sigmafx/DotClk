@@ -1,6 +1,7 @@
 #ifndef __DOTMAP_H__
 #define __DOTMAP_H__
-#include <SD.h>
+
+#include <SdFat.h>
 
 class Dotmap
 {
@@ -22,7 +23,7 @@ class Dotmap
 
     Dotmap& operator=(const Dotmap& other);
     void Create(const int width, const int height);
-    bool Create(File& fileDotmap);
+    bool Create(SdFile& fileDotmap);
 
     bool SetDotsFromRaw(const byte *data, uint16_t len);
     bool SetMaskFromRaw(const byte *data, uint16_t len);

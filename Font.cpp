@@ -23,7 +23,7 @@ void Font::Create(uint16_t chars, Dotmap& font)
   charInfo = new FontCharInfo[chars] ;
 }
 
-void Font::Create(File& fileFont)
+void Font::Create(SdFile& fileFont)
 {
   uint16_t Version;
   uint16_t CntFontInfo;
@@ -31,7 +31,7 @@ void Font::Create(File& fileFont)
   char FontName[255 + 1] ;
 
   // Rewind the file
-  fileFont.seek(0);
+  fileFont.seekSet(0);
   
   // Read the font header
   fileFont.read(&Version, sizeof(Version));
@@ -170,36 +170,29 @@ byte Font::GetFontCount()
   byte ret = 0;
 
   // Open the 'Fonts' directory
-  File dirFonts = SD.open("/Fonts", FILE_READ);    
-  if(dirFonts)
+  SdFile dirFonts;
+  if(dirFonts.open("/Fonts", O_RDONLY))
   {
-    do
-    {
-      File fileFont = dirFonts.openNextFile();
-      if(fileFont)
-      {
-        ret++;
-        fileFont.close();
-      }
-      else
-      {
-        break;
-      }
-    }
-    while(true);
+    SdFile fileFont;
 
+    while(fileFont.openNext(&dirFonts, O_RDONLY))
+    {
+      ret++;
+      fileFont.close();
+    }
+    
     dirFonts.close();
   }
 
   return ret;
 }
 
-byte Font::GetFontName(File& fileFont, FONTNAME fontName)
+byte Font::GetFontName(SdFile& fileFont, FONTNAME fontName)
 {
   uint16_t Version;
   byte FontNameLen ;
 
-  fileFont.seek(0);
+  fileFont.seekSet(0);
   fileFont.read(&Version, sizeof(Version));
   fileFont.read(&FontNameLen, sizeof(FontNameLen));
 
