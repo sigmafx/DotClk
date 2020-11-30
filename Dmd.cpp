@@ -41,8 +41,10 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
   pinMode(pinR2, OUTPUT);
   pinMode(pinG1, OUTPUT);
   pinMode(pinG2, OUTPUT);
+  #ifdef HUB75
   pinMode(pinB1, OUTPUT);
   pinMode(pinB2, OUTPUT);
+  #endif
   pinMode(pinLA, OUTPUT);
   pinMode(pinLB, OUTPUT);
   pinMode(pinLC, OUTPUT);
@@ -56,8 +58,10 @@ void Dmd::Initialise(int pinEN, int pinR1, int pinR2, int pinG1, int pinG2, int 
   digitalWrite(pinR2, LOW);
   digitalWrite(pinG1, LOW);
   digitalWrite(pinG2, LOW);
+  #ifdef HUB75
   digitalWrite(pinB1, LOW);
   digitalWrite(pinB2, LOW);
+  #endif
   digitalWrite(pinLA, LOW);
   digitalWrite(pinLB, LOW);
   digitalWrite(pinLC, LOW);
@@ -285,9 +289,15 @@ int Dmd::UpdateRowType0()
     // Green
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
+
+    #ifdef HUB75
     // Blue
     digitalWriteFast(pinB1, data1 & maskB);
     digitalWriteFast(pinB2, data2 & maskB);
+    #else
+    // Stop compile warning
+    maskB = maskB;
+    #endif
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);
@@ -316,9 +326,12 @@ int Dmd::UpdateRowType0()
     // Green
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
+
+    #ifdef HUB75
     // Blue
     digitalWriteFast(pinB1, data1 & maskB);
     digitalWriteFast(pinB2, data2 & maskB);
+    #endif
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);
@@ -417,9 +430,15 @@ int Dmd::UpdateRowType1()
     // Green
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
+
+    #ifdef HUB75
     // Blue
     digitalWriteFast(pinB1, data1 & maskB);
     digitalWriteFast(pinB2, data2 & maskB);
+    #else
+    // Stop compile warning
+    maskB = maskB;
+    #endif
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);
@@ -451,9 +470,12 @@ int Dmd::UpdateRowType1()
     // Green
     digitalWriteFast(pinG1, data1 & maskG);
     digitalWriteFast(pinG2, data2 & maskG);
+
+    #ifdef HUB75
     // Blue
     digitalWriteFast(pinB1, data1 & maskB);
     digitalWriteFast(pinB2, data2 & maskB);
+    #endif
 
     // Clock HIGH
     digitalWriteFast(pinSK, HIGH);

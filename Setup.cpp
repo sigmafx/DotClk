@@ -125,6 +125,21 @@ struct MenuClockDelay : Menu
 
 struct MenuDotColour : Menu
 {
+  #ifdef HUB08
+  MenuDotColour() : Menu(3) 
+  {
+    menuTitle = "DOT COLOUR";
+    menuItems[0] = "RED";
+    menuItems[1] = "GREEN";
+    menuItems[2] = "YELLOW";
+    menuButtons[0] = "Back";
+    menuButtons[1] = "Prev";
+    menuButtons[2] = "Next";
+    menuButtons[3] = "Save";
+  }
+  #endif
+
+  #ifdef HUB75
   MenuDotColour() : Menu(7) 
   {
     menuTitle = "DOT COLOUR";
@@ -140,6 +155,7 @@ struct MenuDotColour : Menu
     menuButtons[2] = "Next";
     menuButtons[3] = "Save";
   }
+  #endif
 };
 
 struct MenuBtnMap : Menu

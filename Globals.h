@@ -1,6 +1,12 @@
 #ifndef __GLOBALS_H__
 #define __GLOBALS_H__
 
+#define HUB08
+
+#if defined(HUB08) && defined(HUB75)
+  #error Only one screen type can be selected
+#endif
+
 #include "Dmd.h"
 #include "Config.h"
 #include "Button.h"

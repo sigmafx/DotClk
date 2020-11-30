@@ -2,8 +2,6 @@
 #include <SdFat.h>
 #include <TimeLib.h>
 
-#define HUB08
-
 // Local Includes
 #include "Globals.h"
 
@@ -33,8 +31,8 @@ typedef char FILENAME[8+1+3+1];
 const int pinEN = 19 ; // B2
 const int pinR1 = 20 ; // D5
 const int pinR2 = 21 ; // D6
-const int pinG1 = 17 ;
-const int pinG2 = 18 ;
+const int pinG1 = 17 ; // B1
+const int pinG2 = 18 ; // B3
 const int pinB1 = 22 ;
 const int pinB2 = 23 ;
 const int pinLA = 7 ;  // D2
@@ -44,7 +42,7 @@ const int pinLD = 4 ;  // A13
 const int pinLT = 1 ;  // B17
 const int pinSK = 0 ;  // B16
 const int pinLED = 13;
-const int pinGND[] = { 16, 17, 18, 22, 23 } ;
+const int pinGND[] = { 2, 3, 16, 17, 18, 22, 23 } ;
 #endif
 
 #ifdef HUB75
@@ -99,8 +97,8 @@ void setup()
   // Set GND for unused pins
   for (int nGnd = 0; nGnd < (int)(sizeof(pinGND) / sizeof(int)); nGnd++)
   {
+    pinMode(pinGND[nGnd], OUTPUT_OPENDRAIN);
     digitalWrite(pinGND[nGnd], LOW);
-    pinMode(pinGND[nGnd], OUTPUT);
   }
   
   // Initialise the LED pin as an output.
