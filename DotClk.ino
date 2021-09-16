@@ -71,11 +71,10 @@ Font *fontClock;
 
 // Scene files list
 FILENAME *sceneNames = NULL;
-uint16_t cntScenes = 0;
 uint16_t curScene = 0;
 
 // SD Card
-SdFatSdio SD;
+SdFatSdioEX* SD = NULL;
 
 //----------------
 // Function: setup
@@ -88,7 +87,7 @@ void setup()
   PMC_LVDSC1 |= PMC_LVDSC1_LVDV(1);
 
   // Serial debug
-  Serial.begin(9600);
+  //Serial.begin(115200);
   //while(!Serial);
 
   // Randomize the generator
@@ -119,10 +118,10 @@ void setup()
   fontSystem.SetCharInfoFromRaw(SYSTEMFontCharInfo, sizeof(SYSTEMFontCharInfo));
 
   // Menu Font
-  dmpFont.Create(351, 11);
+  dmpFont.Create(354, 11);
   dmpFont.SetDotsFromRaw(MENUFontDots, sizeof(MENUFontDots));
   dmpFont.SetMaskFromRaw(MENUFontMask, sizeof(MENUFontMask));
-  fontMenu.Create(44, dmpFont);
+  fontMenu.Create(45, dmpFont);
   fontMenu.SetCharInfoFromRaw(MENUFontCharInfo, sizeof(MENUFontCharInfo));
 
   // Standard Font
@@ -145,12 +144,35 @@ void setup()
   // Start the DMD
   dmd.Start();
 
-  // Boot
-  Boot();
+  // Show boot screen
+  ShowBootScreen();
+
+  // Set up RTC
+  setSyncProvider(getTeensy3Time);
+  setSyncInterval(60); // Seconds
+  delay(100);
+
+  // RTC Compensation
+  // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
+  // For example, adjust = -100 is slows the clock by 11.92 ppm
+  Teensy3Clock.compensate(config.GetCfgItems().cfgTimeCorrect);
+
+  // Init the SD Card
+  if(InitSD())
+  {  
+    // Init the scene file name list
+    InitScenes();
+  }
+
+  // Init the clock font - SD card is optional as STANDARD font can be used
+  InitClockFont();
+
+  // Pause 2 seconds for boot screen view
+  delay(2000);
 
   // Display test if 'Enter' button pressed
   DisplayTest();
-  
+
   return;
 }
 
@@ -160,7 +182,7 @@ void setup()
 void loop()
 {
   static int mode = modeClock;
-
+  
   time_t tNow = NowDST();
   time_t tWake = config.GetCfgItems().cfgWakeTime;
 
@@ -169,7 +191,7 @@ void loop()
   {
     forceWake = false;
   }
-    
+
   switch(mode)
   {
     case modeClock:
@@ -281,23 +303,14 @@ void doClock()
   time_t timeNow = NowDST();
   ConfigItems cfgItems = config.GetCfgItems();
   
-  if(cntScenes == 0)
-  {
-    // Scenes dir not open, try to init the SD Card
-    if(InitSD())
-    {
-      // SD Card now available - reboot
-      CpuRestart();
-    }
-  }
-  else if(!fileScene.isOpen())
+  if(cntScenes > 0 && !fileScene.isOpen())
   {
     char pathScene[255 + 1];
     int cfgShowBrandValue = config.GetShowBrandValue();
 
     cfgClockDelayValue = config.GetClockDelayValue();
 
-    if(cfgShowBrandValue == 0 || curScene % cfgShowBrandValue > 0 || !SD.exists("/Scenes/brand.scn"))
+    if(cfgShowBrandValue == 0 || curScene % cfgShowBrandValue > 0 || !SD->exists("/Scenes/brand.scn"))
     {
       // Open the next scene file
       if(cfgItems.cfgDebug  == 0)
@@ -324,6 +337,7 @@ void doClock()
       if(!scene.Create(fileScene))
       {
         // SD Card not inserted
+        fileScene.close();
         cntScenes = 0;
       }
     }
@@ -380,7 +394,7 @@ void doClock()
 
     if(cfgItems.cfgDebug != 0)
     {
-      char textDurn[63 + 1];
+      char textDurn[20 + 1];
       Dotmap dmpDuration ;
       
       sprintf(textDurn, "%lu", sceneDuration);
@@ -420,11 +434,12 @@ void doClock()
       {
         // Finished the scene close it
         fileScene.close();
+        ReInitSD();
       }
     }
 
     // Still open after next frame processing?
-    if(fileScene.isOpen())
+    if(SD != NULL && fileScene.isOpen())
     {
       int xClock, yClock;
 
@@ -505,76 +520,37 @@ void doClock()
   dmd.SetFrame(frame);
 }
 
-//---------------
-// Function: Boot
-//---------------
-void Boot()
-{
-  DmdFrame frame;
-  Dotmap dmpBootMsg;
-  char bootMsg[16 + 1];
-  unsigned long timeBootStart = millis();
-  unsigned long timeBootDurn ;
-  
-  // Show the version number of the firmware
-  sprintf(bootMsg, "DOTCLK V%s", VERSION);
-  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
-  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (16 - dmpBootMsg.GetHeight()) - 1);
-
-  // Show the version number of the firmware
-  ConfigItems cfgItems = config.GetCfgItems();
-  sprintf(bootMsg, "SCREEN TYPE:%d", cfgItems.cfgDmdType);
-  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
-  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, 16 + 1);
-
-  // Update the DMD
-  dmd.SetFrame(frame);
-
-  // Set up RTC
-  setSyncProvider(getTeensy3Time);
-  setSyncInterval(60); // Seconds
-  delay(100);
-  if (timeStatus()!= timeSet)
-  {
-    Serial.println("Unable to sync with the RTC");
-  }
-  else
-  {
-    Serial.println("RTC has set the system time");
-  }
-
-  // RTC Compensation
-  // adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
-  // For example, adjust = -100 is slows the clock by 11.92 ppm
-  Teensy3Clock.compensate(config.GetCfgItems().cfgTimeCorrect);
-
-  // Init the SD Card
-  if(InitSD())
-  {  
-    // Init the scene file name list
-    InitScenes();
-  }
-
-  // Init the clock font - SD card is optional as STANDARD font can be used
-  InitClockFont();
-
-  // Pause at least 2 seconds
-  timeBootDurn = millis() - timeBootStart;
-  if(timeBootDurn < 2000)
-  {
-    // Pause before returning
-    delay(2000 - timeBootDurn);
-  }
-}
-
 //-----------------
 // Function: InitSD
 //-----------------
 bool InitSD()
 {
-  // Connect to SD Card
-  // Return whether we can see the Scenes directory
-  return SD.begin() && SD.exists("/Scenes");
+  if(SD == NULL)
+  {
+    SD = new SdFatSdioEX;
+
+    // Connect to SD Card
+    // Return whether we can see the Scenes directory
+    return SD->begin() && SD->exists("/Scenes");
+  }  
+  else
+  {
+    return SD->exists("/Scenes");
+  }
+}
+
+//-------------------
+// Function: ReInitSD
+//-------------------
+bool ReInitSD()
+{
+  if(SD != NULL)
+  {
+    delete SD;
+    SD = NULL;
+  }
+
+  return InitSD();
 }
 
 //---------------------
@@ -647,7 +623,7 @@ void InitScenes()
 void InitClockFont()
 {
   // Check the SD is available with Fonts directory
-  if(SD.exists("/Fonts"))
+  if(SD != NULL && SD->exists("/Fonts"))
   {
     // Delete any previous user font loaded
     if(fontUser != NULL)
@@ -760,5 +736,29 @@ void DisplayTest()
     // Wait for button to be pressed again
     while(btnEnter.Read() != Button::Rising);
   }
+}
+
+//-------------------------
+// Function: ShowBootScreen
+//-------------------------
+void ShowBootScreen()
+{
+  DmdFrame frame;
+  Dotmap dmpBootMsg;
+  char bootMsg[16 + 1];
+  
+  // Show the version number of the firmware
+  sprintf(bootMsg, "DOTCLK V%s", VERSION);
+  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
+  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (16 - dmpBootMsg.GetHeight()) - 1);
+
+  // Show the screen type
+  ConfigItems cfgItems = config.GetCfgItems();
+  sprintf(bootMsg, "SCREEN TYPE:%d", cfgItems.cfgDmdType);
+  fontSystem.DmpFromString(dmpBootMsg, bootMsg);
+  frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, 16 + 1);
+
+  // Update the DMD
+  dmd.SetFrame(frame);
 }
 
