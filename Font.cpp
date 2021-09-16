@@ -56,9 +56,6 @@ bool Font::SetCharInfoFromRaw(const byte *data, uint16_t len)
 
   if(len != (chars * sizeof(FontCharInfo)))
   {
-    // ERROR - invalid len
-    Serial.print("Invalid len - ");
-    Serial.println(len);    
     goto ERROR_EXIT;
   }
 

@@ -145,7 +145,6 @@ bool Dotmap::SetMaskFromRaw(const byte *data, uint16_t len)
   if(len != (widthBytesMask * height))
   {
     // ERROR Incorrect buffer size
-    Serial.println("Error in mask from raw");
     goto ERROR_EXIT;
   }
   
