@@ -21,3 +21,6 @@ Font fontMenu;
 // Force Wake flag
 bool forceWake = false;
 
+// Scene counts
+uint16_t cntScenes = 0;
+

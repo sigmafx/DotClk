@@ -36,4 +36,7 @@ extern Font fontSystem;
 // Force Wake flag
 extern bool forceWake;
 
+// Scene counts
+extern uint16_t cntScenes;
+
 #endif
