@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+#include "Globals.h"
 #include "Font.h"
 #include "Dotmap.h"
 
@@ -23,7 +24,7 @@ void Font::Create(uint16_t chars, Dotmap& font)
   charInfo = new FontCharInfo[chars] ;
 }
 
-void Font::Create(SdFile& fileFont)
+void Font::Create(FsFile& fileFont)
 {
   uint16_t Version;
   uint16_t CntFontInfo;
@@ -167,10 +168,10 @@ byte Font::GetFontCount()
   byte ret = 0;
 
   // Open the 'Fonts' directory
-  SdFile dirFonts;
-  if(dirFonts.open("/Fonts", O_RDONLY))
+  FsFile dirFonts = sdfs->open("/Fonts", O_RDONLY);
+  if(dirFonts.isOpen())
   {
-    SdFile fileFont;
+    FsFile fileFont;
 
     while(fileFont.openNext(&dirFonts, O_RDONLY))
     {
@@ -184,7 +185,7 @@ byte Font::GetFontCount()
   return ret;
 }
 
-byte Font::GetFontName(SdFile& fileFont, FONTNAME fontName)
+byte Font::GetFontName(FsFile& fileFont, FONTNAME fontName)
 {
   uint16_t Version;
   byte FontNameLen ;
@@ -264,4 +265,3 @@ void Font::Delete()
     delete[] charInfo;
   }
 }
-

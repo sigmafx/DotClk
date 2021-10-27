@@ -39,4 +39,7 @@ extern bool forceWake;
 // Scene counts
 extern uint16_t cntScenes;
 
+// SD Card
+extern SdFs* sdfs;
+
 #endif

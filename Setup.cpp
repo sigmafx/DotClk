@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Time.h>
+#include <TimeLib.h>
 
 #include "Globals.h"
 
@@ -258,8 +258,8 @@ bool doSetup(bool isInit)
     }
     fontUserNames = new FONTNAME[fontCount];
 
-    SdFile dirFonts;
-    if(dirFonts.open("/Fonts", O_RDONLY))
+    FsFile dirFonts = sdfs->open("/Fonts", O_RDONLY);
+    if(dirFonts.isOpen())
     {
       int fontCur ;
 
@@ -268,7 +268,7 @@ bool doSetup(bool isInit)
 
       for(fontCur = 0; fontCur < fontCount; fontCur++)
       {
-        SdFile fileFont;
+        FsFile fileFont;
         
         if(fileFont.openNext(&dirFonts, O_RDONLY))
         {
@@ -1002,4 +1002,3 @@ static int HandleTimeCorrect(DmdFrame& frame, bool tick, bool isInit, int& initV
 
   return ret;
 }
-

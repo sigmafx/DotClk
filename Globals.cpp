@@ -24,3 +24,5 @@ bool forceWake = false;
 // Scene counts
 uint16_t cntScenes = 0;
 
+// SD Card
+SdFs* sdfs = NULL;

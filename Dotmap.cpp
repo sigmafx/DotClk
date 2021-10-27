@@ -38,6 +38,7 @@ Dotmap& Dotmap::operator=(const Dotmap& rhs)
   
   if(rhs.dots == NULL)
   {
+    delete[] dots;
     dots = NULL;
   }
   else
@@ -47,6 +48,7 @@ Dotmap& Dotmap::operator=(const Dotmap& rhs)
 
   if(rhs.mask == NULL)
   {
+    delete[] mask;
     mask = NULL;
   }
   else
@@ -83,7 +85,7 @@ void Dotmap::Create(int width, int height)
 //-----------------
 // Function: Create
 //-----------------
-bool Dotmap::Create(SdFile& fileDotmap)
+bool Dotmap::Create(FsFile& fileDotmap)
 {
   bool ret = true;
   uint16_t dotsWidth;
@@ -96,6 +98,11 @@ bool Dotmap::Create(SdFile& fileDotmap)
   ret &= fileDotmap.read(&dotsHeight, sizeof(dotsHeight)) > -1;
   ret &= fileDotmap.read(&dotsBpp, sizeof(dotsBpp)) > -1;
   ret &= fileDotmap.read(&hasMask, sizeof(hasMask)) > -1;
+
+  if(dotsWidth != 128 || dotsHeight != 32 || dotsBpp != 4 || (hasMask != 0 && hasMask != 1))
+  {
+    ret = false;
+  }
 
   // Only open if we successfully read the dotmap header
   if(ret)
@@ -361,12 +368,13 @@ void Dotmap::Delete()
   if(dots != NULL)
   {
     delete[] dots;
+    dots = NULL;
   }
 
   if(mask != NULL)
   {
     delete[] mask;
+    mask = NULL;
   }
 }
 // End of file
-

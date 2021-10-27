@@ -19,7 +19,7 @@ Scene::~Scene()
 {
 }
 
-bool Scene::Create(SdFile& fileScene)
+bool Scene::Create(FsFile& fileScene)
 {
   bool ret = true;
   uint16_t version;
@@ -86,7 +86,7 @@ bool Scene::Eof()
   return (curFrame == cntFrames && (doLast == DONE || doLast == NA));
 }
 
-bool Scene::NextFrame(SdFile& fileScene)
+bool Scene::NextFrame(FsFile& fileScene)
 {
   bool ret = true;
   
@@ -206,4 +206,3 @@ byte Scene::GetCustomY()
 {
   return customY;
 }
-

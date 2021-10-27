@@ -34,9 +34,9 @@ class Scene
     Scene();
     ~Scene();
 
-    bool Create(SdFile& fileScene);
+    bool Create(FsFile& fileScene);
     bool Eof();
-    bool NextFrame(SdFile& fileScene);
+    bool NextFrame(FsFile& fileScene);
     Dotmap& GetFrameDotmap();
     unsigned long GetFrameDelay();
     uint16_t GetFrameLayer();
@@ -46,4 +46,3 @@ class Scene
 };
 
 #endif
-

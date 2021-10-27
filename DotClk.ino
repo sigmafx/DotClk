@@ -73,9 +73,6 @@ Font *fontClock;
 FILENAME *sceneNames = NULL;
 uint16_t curScene = 0;
 
-// SD Card
-SdFatSdioEX* SD = NULL;
-
 //----------------
 // Function: setup
 //----------------
@@ -286,7 +283,7 @@ void loop()
 //------------------
 void doClock()
 {
-  static SdFile fileScene ;
+  static FsFile fileScene ;
   static Scene scene;
   static unsigned long millisSceneStart = millis();
   static unsigned long millisSceneFrameDelay = 0;
@@ -310,7 +307,7 @@ void doClock()
 
     cfgClockDelayValue = config.GetClockDelayValue();
 
-    if(cfgShowBrandValue == 0 || curScene % cfgShowBrandValue > 0 || !SD->exists("/Scenes/brand.scn"))
+    if(cfgShowBrandValue == 0 || curScene % cfgShowBrandValue > 0 || !sdfs->exists("/Scenes/brand.scn"))
     {
       // Open the next scene file
       if(cfgItems.cfgDebug  == 0)
@@ -331,9 +328,10 @@ void doClock()
     }
 
     // Open the scene file
-    if(fileScene.open(pathScene, O_RDONLY))
+    fileScene = sdfs->open(pathScene, O_RDONLY);
+    if(fileScene.isOpen())
     {
-      // Creste the scene object from the scene file
+      // Create the scene object from the scene file
       if(!scene.Create(fileScene))
       {
         // SD Card not inserted
@@ -432,14 +430,14 @@ void doClock()
       }
       else
       {
-        // Finished the scene close it
+        // Finished the scene, close it
         fileScene.close();
         ReInitSD();
       }
     }
 
     // Still open after next frame processing?
-    if(SD != NULL && fileScene.isOpen())
+    if(fileScene.isOpen())
     {
       int xClock, yClock;
 
@@ -523,19 +521,24 @@ void doClock()
 //-----------------
 // Function: InitSD
 //-----------------
+bool InitSD2()
+{
+    return sdfs->begin(SdioConfig(DMA_SDIO)) && sdfs->exists("/Scenes");
+}
+
 bool InitSD()
 {
-  if(SD == NULL)
+  if(sdfs == NULL)
   {
-    SD = new SdFatSdioEX;
+    sdfs = new SdFs;
 
     // Connect to SD Card
     // Return whether we can see the Scenes directory
-    return SD->begin() && SD->exists("/Scenes");
+    return sdfs->begin(SdioConfig(DMA_SDIO)) && sdfs->exists("/Scenes");
   }  
   else
   {
-    return SD->exists("/Scenes");
+    return sdfs->exists("/Scenes");
   }
 }
 
@@ -544,10 +547,10 @@ bool InitSD()
 //-------------------
 bool ReInitSD()
 {
-  if(SD != NULL)
+  if(sdfs != NULL)
   {
-    delete SD;
-    SD = NULL;
+    delete sdfs;
+    sdfs = NULL;
   }
 
   return InitSD();
@@ -558,11 +561,11 @@ bool ReInitSD()
 //---------------------
 void InitScenes()
 {
-  SdFile dirScenes;
-  SdFile file ;
+  FsFile dirScenes = sdfs->open("/Scenes", O_RDONLY);
+  FsFile file ;
 
   // Scene directory exists?
-  if(dirScenes.open("/Scenes", O_RDONLY))
+  if(dirScenes.isOpen())
   {
     // Previous list exists?
     if(sceneNames != NULL)
@@ -623,7 +626,7 @@ void InitScenes()
 void InitClockFont()
 {
   // Check the SD is available with Fonts directory
-  if(SD != NULL && SD->exists("/Fonts"))
+  if(sdfs->exists("/Fonts"))
   {
     // Delete any previous user font loaded
     if(fontUser != NULL)
@@ -636,11 +639,11 @@ void InitClockFont()
     if(strcmp(config.GetCfgItems().cfgClockFont, "STANDARD") != 0)
     {
       // Open the 'Fonts' directory
-      SdFile dirFonts;
+      FsFile dirFonts = sdfs->open("/Fonts", O_RDONLY);
       
-      if(dirFonts.open("/Fonts", O_RDONLY))
+      if(dirFonts.isOpen())
       {
-        SdFile fileFont;
+        FsFile fileFont;
         
         while(fileFont.openNext(&dirFonts, O_RDONLY))
         {
@@ -655,6 +658,7 @@ void InitClockFont()
 
             // Load the font
             fontUser->Create(fileFont);
+            fileFont.close();
             break;
           }
 
@@ -761,4 +765,3 @@ void ShowBootScreen()
   // Update the DMD
   dmd.SetFrame(frame);
 }
-
