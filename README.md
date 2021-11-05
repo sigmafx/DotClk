@@ -45,3 +45,17 @@ On the SD Card there needs to be a directory called Scenes. Place the animation 
 On the SD Card there needs to be a directory called Fonts. Place the font files (.fnt) in this directory.
 
 Get in touch if you need any help - I hang out on PinballInfo.com, user DrPinball.
+
+## If the clock keeps crashing / screen goes blank
+There has been an issue where the clock appears to stop working - the screen remains blank and it is necessary to turn off, then on to restart the clock, although once this has started happening the clock will show a blank screen again after a short while.
+
+This issue has now been fixed - if you are having this problem please follow these steps:
+1. Remove the SD card from the clock and delete all files on it. Copy over the Scenes and Fonts folders by following the instructions here:
+https://github.com/sigmafx/DotClk-Resources
+
+2. Update the software installed on the clock by using the latest DotClk.ino.TEENSY35.hex file. To do this follow the instruections here:
+https://github.com/sigmafx/DotClk#how-to-use-the-hex-file
+
+It will be necessary to connect a micro usb cable to the Teensy micro controller in the clock and use the Teensy loader application to select the hex file and upload to the board.
+
+If you are having issues with this process please send an email to dotclk@drpinball.co.uk.
