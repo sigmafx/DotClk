@@ -35,6 +35,7 @@ class Scene
     ~Scene();
 
     bool Create(FsFile& fileScene);
+    void Clear();
     bool Eof();
     bool NextFrame(FsFile& fileScene);
     Dotmap& GetFrameDotmap();

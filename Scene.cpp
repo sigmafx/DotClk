@@ -70,15 +70,41 @@ bool Scene::Create(FsFile& fileScene)
       ret &= fileScene.read(space, sizeof(space)) > -1;
     }
   }
+
+  if(ret)
+  {
+    // First and Last frame special processing?
+    doFirst = (firstFrameDelay == 0 ? NA : TODO);
+    doLast = (lastFrameDelay == 0 ? NA : TODO);
   
-  // First and Last frame special processing?
-  doFirst = (firstFrameDelay == 0 ? NA : TODO);
-  doLast = (lastFrameDelay == 0 ? NA : TODO);
-  
-  cntFrames = cntItemDotmap;
-  curFrame = 0;
+    cntFrames = cntItemDotmap;
+    curFrame = 0;
+  }
   
   return ret;  
+}
+
+void Scene::Clear()
+{
+  firstFrameDelay = 0;
+  firstFrameLayer = 0;
+  firstBlank = 0;
+  frameDelay = 0;
+  frameLayer = 0;
+  lastFrameDelay = 0;
+  lastFrameLayer = 0;
+  lastBlank = 0;
+  clockStyle = 0;
+  customX = 0;
+  customY = 0;
+  
+  doFirst = NA;
+  doLast = NA;
+  cntFrames = 0;
+  curFrame = 0;
+
+  dmpFrame.ClearDots();
+  dmpFrame.ClearMask();
 }
 
 bool Scene::Eof()

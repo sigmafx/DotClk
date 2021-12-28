@@ -1,7 +1,7 @@
 #ifndef __GLOBALS_H__
 #define __GLOBALS_H__
 
-#define HUB08
+#define HUB75
 
 #if defined(HUB08) && defined(HUB75)
   #error Only one screen type can be selected

@@ -334,15 +334,13 @@ void doClock()
       // Create the scene object from the scene file
       if(!scene.Create(fileScene))
       {
-        // SD Card not inserted
+        scene.Clear();
         fileScene.close();
-        cntScenes = 0;
       }
     }
     else
     {
-      // SD Card not inserted
-      cntScenes = 0;
+      scene.Clear();
     }
     
     // Keep track of the scene count
@@ -431,7 +429,11 @@ void doClock()
       else
       {
         // Finished the scene, close it
-        fileScene.close();
+        if(fileScene.isOpen())
+        {
+          fileScene.close();
+        }
+
         ReInitSD();
       }
     }
@@ -521,11 +523,6 @@ void doClock()
 //-----------------
 // Function: InitSD
 //-----------------
-bool InitSD2()
-{
-    return sdfs->begin(SdioConfig(DMA_SDIO)) && sdfs->exists("/Scenes");
-}
-
 bool InitSD()
 {
   if(sdfs == NULL)
