@@ -1,6 +1,7 @@
 #ifndef __DMDFRAME_H__
 #define __DMDFRAME_H__
 
+#include <Arduino.h>
 #include "DmdFrameRaw.h"
 #include "Dotmap.h"
 
@@ -24,4 +25,3 @@ class DmdFrame
 };
 
 #endif
-

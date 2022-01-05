@@ -140,7 +140,7 @@ struct MenuDotColour : Menu
   #endif
 
   #ifdef HUB75
-  MenuDotColour() : Menu(7) 
+  MenuDotColour() : Menu(8) 
   {
     menuTitle = "DOT COLOUR";
     menuItems[0] = "RED";
@@ -150,6 +150,7 @@ struct MenuDotColour : Menu
     menuItems[4] = "MAGENTA";
     menuItems[5] = "CYAN";
     menuItems[6] = "WHITE";
+    menuItems[7] = "CHANGE";
     menuButtons[0] = "Back";
     menuButtons[1] = "Prev";
     menuButtons[2] = "Next";
@@ -554,7 +555,7 @@ bool doSetup(bool isInit)
           else
           {
             // Reset colour back on 'Back' button
-            dmd.SetColour(setItems.cfgDotColour);
+            colourControl.SetColour(setItems.cfgDotColour);
           }
           
           showMainMenu = true;
@@ -754,7 +755,7 @@ static int HandleStandard(DmdFrame& frame, Menu& menu, bool isInit, int& initVal
 //----------------------------
 static void FeedbackDotColour(int value)
 {
-  dmd.SetColour(value);  
+  colourControl.SetColour(value);  
 }
 
 //---------------------------

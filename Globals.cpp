@@ -5,6 +5,9 @@
 // Dmd Screen
 Dmd dmd ;
 
+// Colour Control
+ColourControl colourControl;
+
 // Configuration
 Config config ;
 

@@ -1,13 +1,14 @@
 #ifndef __GLOBALS_H__
 #define __GLOBALS_H__
 
-#define HUB75
+#define HUB08
 
 #if defined(HUB08) && defined(HUB75)
   #error Only one screen type can be selected
 #endif
 
 #include "Dmd.h"
+#include "ColourControl.h"
 #include "Config.h"
 #include "Button.h"
 
@@ -19,6 +20,9 @@ const int pinBtnMenu = 30;
 
 // Dmd Screen
 extern Dmd dmd ;
+
+// Colour Control
+extern ColourControl colourControl;
 
 // Configuration
 extern Config config ;
