@@ -136,7 +136,7 @@ void setup()
   dmd.SetBrightness(config.GetCfgItems().cfgBrightness);
 
   // Set DMD colour from config
-  dmd.SetColour(config.GetCfgItems().cfgDotColour);
+  colourControl.SetColour(config.GetCfgItems().cfgDotColour);
 
   // Start the DMD
   dmd.Start();
@@ -334,12 +334,14 @@ void doClock()
       // Create the scene object from the scene file
       if(!scene.Create(fileScene))
       {
+        // Error reading file
         scene.Clear();
         fileScene.close();
       }
     }
     else
     {
+      // Error opening file
       scene.Clear();
     }
     
@@ -531,7 +533,7 @@ bool InitSD()
 
     // Connect to SD Card
     // Return whether we can see the Scenes directory
-    return sdfs->begin(SdioConfig(DMA_SDIO)) && sdfs->exists("/Scenes");
+    return sdfs->begin(SdioConfig(FIFO_SDIO)) && sdfs->exists("/Scenes");
   }  
   else
   {
@@ -748,14 +750,22 @@ void ShowBootScreen()
   Dotmap dmpBootMsg;
   char bootMsg[16 + 1];
   
+#if defined(__MK64FX512__)
+  const char *uController = "T3.5";
+#elif defined(__MK66FX1M0__)
+  const char *uController = "T3.6";
+#else
+  const char *uController = "N/A";
+#endif
+
   // Show the version number of the firmware
   sprintf(bootMsg, "DOTCLK V%s", VERSION);
   fontSystem.DmpFromString(dmpBootMsg, bootMsg);
   frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, (16 - dmpBootMsg.GetHeight()) - 1);
 
-  // Show the screen type
+  // Show the dmd and uController type
   ConfigItems cfgItems = config.GetCfgItems();
-  sprintf(bootMsg, "SCREEN TYPE:%d", cfgItems.cfgDmdType);
+  sprintf(bootMsg, "DMD:%d  uC:%s", cfgItems.cfgDmdType, uController);
   fontSystem.DmpFromString(dmpBootMsg, bootMsg);
   frame.DotBlt(dmpBootMsg, 0, 0, dmpBootMsg.GetWidth(), dmpBootMsg.GetHeight(), (128 - dmpBootMsg.GetWidth())/2, 16 + 1);
 
