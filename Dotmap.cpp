@@ -99,11 +99,6 @@ bool Dotmap::Create(FsFile& fileDotmap)
   ret &= fileDotmap.read(&dotsBpp, sizeof(dotsBpp)) > -1;
   ret &= fileDotmap.read(&hasMask, sizeof(hasMask)) > -1;
 
-  if(dotsWidth != 128 || dotsHeight != 32 || dotsBpp != 4 || (hasMask != 0 && hasMask != 1))
-  {
-    ret = false;
-  }
-
   // Only open if we successfully read the dotmap header
   if(ret)
   {
