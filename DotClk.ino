@@ -80,9 +80,6 @@ void setup()
 {  
   Dotmap dmpFont;
 
-  // Set low voltage level to HIGH
-  PMC_LVDSC1 |= PMC_LVDSC1_LVDV(1);
-
   // Serial debug
   //Serial.begin(115200);
   //while(!Serial);
@@ -754,6 +751,8 @@ void ShowBootScreen()
   const char *uController = "T3.5";
 #elif defined(__MK66FX1M0__)
   const char *uController = "T3.6";
+#elif defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  const char *uController = "T4.1";
 #else
   const char *uController = "N/A";
 #endif
